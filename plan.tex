@@ -1,0 +1,341 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\title{\textbf{Re-implementing Agentic Graph RAG for Vulnerability Assessment}\\
+\large Implementation Plan: November 6 - December 4, 2025}
+\author{Team Members: Hafiz (PIC), Dzikran, Tegar, Syafran, Davin}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Project Overview}
+
+This project aims to adapt and re-implement the Agentic Graph RAG approach for vulnerability assessment, integrating cybersecurity knowledge graphs to rank vulnerabilities, generate risk assessments, and provide mitigation advice.
+
+\subsection{Key Deliverables}
+\begin{itemize}
+    \item Agentic RAG system for vulnerability assessment
+    \item Comparison with Normal RAG and Traditional CVSS scoring
+    \item Evaluation results (accuracy, ranking quality, speed)
+    \item 3 real vulnerability examples with system outputs
+    \item GitHub repository with code and documentation
+\end{itemize}
+
+\subsection{Technical Stack}
+\begin{itemize}
+    \item \textbf{Knowledge Graph:} SEPSES Cybersecurity KG (CVE, CVSS, CWE, CAPEC)
+    \item \textbf{Framework:} LangGraph for agent orchestration
+    \item \textbf{Database:} Neo4j (LPG) + Virtuoso/SPARQL endpoint
+    \item \textbf{LLM:} OpenAI GPT-4 or Claude (for prototyping)
+    \item \textbf{Embedding:} all-MiniLM-L6-v2 (HuggingFace)
+\end{itemize}
+
+\section{Weekly Implementation Plan}
+
+\subsection*{Week 1: November 6-12, 2025 - Setup \& Research}
+
+\begin{longtable}{|p{3cm}|p{9cm}|p{2.5cm}|}
+\hline
+\textbf{Team Member} & \textbf{Tasks} & \textbf{Deliverables} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Team Member} & \textbf{Tasks} & \textbf{Deliverables} \\
+\hline
+\endhead
+
+\textbf{Hafiz (PIC)} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Study both papers thoroughly
+    \item Setup project GitHub repository
+    \item Define evaluation metrics (accuracy, ranking correlation, response time)
+    \item Create project timeline and coordinate team meetings
+\end{itemize} & 
+GitHub repo, Evaluation plan \\
+\hline
+
+\textbf{Dzikran} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Study AgCyRAG architecture (Paper 1)
+    \item Explore SEPSES KG SPARQL endpoint
+    \item Document available KG queries and data schema
+    \item Setup Python environment (LangGraph, Neo4j)
+\end{itemize} & 
+KG documentation, Environment setup \\
+\hline
+
+\textbf{Tegar} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Collect CVE vulnerability dataset (NVD API)
+    \item Select 50-100 vulnerabilities with varying severity
+    \item Extract 3 detailed case studies for demonstration
+    \item Prepare ground truth CVSS scores
+\end{itemize} & 
+Dataset (CSV/JSON), Case studies \\
+\hline
+
+\textbf{Syafran} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Setup Neo4j database locally
+    \item Install and configure required dependencies
+    \item Test SPARQL queries against SEPSES endpoint
+    \item Document API keys and access requirements
+\end{itemize} & 
+Neo4j setup, SPARQL test queries \\
+\hline
+
+\textbf{Davin} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Research embedding models for vulnerability text
+    \item Setup vector database (Neo4j vector index)
+    \item Test embedding generation pipeline
+    \item Prepare baseline RAG implementation outline
+\end{itemize} & 
+Embedding pipeline, RAG baseline design \\
+\hline
+\end{longtable}
+
+\subsection*{Week 2: November 13-19, 2025 - Core Implementation}
+
+\begin{longtable}{|p{3cm}|p{9cm}|p{2.5cm}|}
+\hline
+\textbf{Team Member} & \textbf{Tasks} & \textbf{Deliverables} \\
+\hline
+
+\textbf{Hafiz (PIC)} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Implement Guardrail Agent (query validation)
+    \item Design agent orchestration workflow
+    \item Coordinate integration between team components
+    \item Review and merge code from team members
+\end{itemize} & 
+Guardrail Agent, Integration plan \\
+\hline
+
+\textbf{Dzikran} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Implement SPARQL Agent for KG queries
+    \item Create MCP functions for SEPSES KG access
+    \item Implement vulnerability-to-CAPEC mapping queries
+    \item Test retrieval accuracy from KG
+\end{itemize} & 
+SPARQL Agent code, Query functions \\
+\hline
+
+\textbf{Tegar} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Implement Vector Agent (semantic search)
+    \item Create vulnerability embeddings from descriptions
+    \item Build vector similarity search module
+    \item Integrate with Neo4j vector index
+\end{itemize} & 
+Vector Agent, Embedding index \\
+\hline
+
+\textbf{Syafran} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Implement Cypher Agent for Neo4j queries
+    \item Model vulnerability relationships in Neo4j
+    \item Create graph traversal queries for impact analysis
+    \item Test query performance
+\end{itemize} & 
+Cypher Agent, Neo4j graph model \\
+\hline
+
+\textbf{Davin} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Implement Normal RAG baseline (no KG)
+    \item Use only vector retrieval over CVE descriptions
+    \item Implement Traditional CVSS baseline
+    \item Prepare comparison framework
+\end{itemize} & 
+Baseline implementations \\
+\hline
+\end{longtable}
+
+\subsection*{Week 3: November 20-26, 2025 - Integration \& Enhancement}
+
+\begin{longtable}{|p{3cm}|p{9cm}|p{2.5cm}|}
+\hline
+\textbf{Team Member} & \textbf{Tasks} & \textbf{Deliverables} \\
+\hline
+
+\textbf{Hafiz (PIC)} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Implement Reflection Agent (quality control)
+    \item Implement Synthesis Agent (response generation)
+    \item Integrate all agents into LangGraph workflow
+    \item End-to-end testing of agentic system
+\end{itemize} & 
+Complete Agentic RAG system \\
+\hline
+
+\textbf{Dzikran} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Implement vulnerability ranking algorithm
+    \item Combine CVSS, exploitability, and KG context
+    \item Add severity scoring logic
+    \item Test ranking against ground truth
+\end{itemize} & 
+Ranking module, Test results \\
+\hline
+
+\textbf{Tegar} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Implement risk assessment generation
+    \item Create prompt templates for summaries
+    \item Generate mitigation advice from CAPEC/CWE
+    \item Test output quality on case studies
+\end{itemize} & 
+Risk assessment module \\
+\hline
+
+\textbf{Syafran} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Optimize query performance (caching, indexing)
+    \item Implement parallel agent execution
+    \item Profile system response times
+    \item Optimize database queries
+\end{itemize} & 
+Performance optimizations \\
+\hline
+
+\textbf{Davin} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Run comparative experiments (Agentic vs Normal RAG vs CVSS)
+    \item Collect accuracy metrics (precision, recall)
+    \item Measure ranking correlation (Spearman's rho)
+    \item Record response times for each approach
+\end{itemize} & 
+Experimental results \\
+\hline
+\end{longtable}
+
+\subsection*{Week 4: November 27 - December 3, 2025 - Evaluation \& Documentation}
+
+\begin{longtable}{|p{3cm}|p{9cm}|p{2.5cm}|}
+\hline
+\textbf{Team Member} & \textbf{Tasks} & \textbf{Deliverables} \\
+\hline
+
+\textbf{Hafiz (PIC)} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Write comprehensive README documentation
+    \item Prepare final presentation slides
+    \item Review all deliverables for completeness
+    \item Coordinate final testing and bug fixes
+\end{itemize} & 
+Documentation, Presentation \\
+\hline
+
+\textbf{Dzikran} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Generate detailed outputs for 3 case studies
+    \item Create comparison tables/charts (accuracy, ranking, speed)
+    \item Analyze system strengths and limitations
+    \item Write technical report sections
+\end{itemize} & 
+Case study outputs, Analysis report \\
+\hline
+
+\textbf{Tegar} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Create evaluation visualizations (charts, graphs)
+    \item Generate confusion matrices and ranking plots
+    \item Prepare demo video/screenshots
+    \item Write results section for report
+\end{itemize} & 
+Visualizations, Demo materials \\
+\hline
+
+\textbf{Syafran} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Clean and organize codebase
+    \item Write API documentation
+    \item Create setup/installation guide
+    \item Prepare code comments and docstrings
+\end{itemize} & 
+Clean code, API docs \\
+\hline
+
+\textbf{Davin} & 
+\begin{itemize}[leftmargin=*,noitemsep]
+    \item Prepare dataset files for GitHub
+    \item Create reproducibility instructions
+    \item Test installation on fresh environment
+    \item Upload final code and data to GitHub
+\end{itemize} & 
+GitHub repository (final) \\
+\hline
+\end{longtable}
+
+\subsection*{Final Deliverable: December 4, 2025}
+
+\begin{itemize}
+    \item \textbf{GitHub Repository:} Complete code, data, and documentation
+    \item \textbf{Technical Report:} Methodology, evaluation results, analysis
+    \item \textbf{Presentation:} Demo and findings
+    \item \textbf{Comparison Table:} Agentic RAG vs Normal RAG vs CVSS
+    \item \textbf{3 Case Studies:} Real vulnerability assessments with system outputs
+\end{itemize}
+
+\section{Evaluation Metrics}
+
+\subsection{Quantitative Metrics}
+\begin{itemize}
+    \item \textbf{Accuracy:} Precision, Recall, F1-score for vulnerability detection
+    \item \textbf{Ranking Quality:} Spearman's correlation with ground truth CVSS
+    \item \textbf{Speed:} Average response time per query (seconds)
+    \item \textbf{Coverage:} \% of vulnerabilities correctly mapped to attack patterns
+\end{itemize}
+
+\subsection{Qualitative Assessment}
+\begin{itemize}
+    \item Clarity and actionability of risk assessments
+    \item Relevance of mitigation recommendations
+    \item Explanation quality and grounding in KG evidence
+\end{itemize}
+
+\section{Risk Mitigation}
+
+\begin{tabular}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Risk} & \textbf{Impact} & \textbf{Mitigation} \\
+\hline
+SPARQL endpoint downtime & Cannot access SEPSES KG & Cache KG data locally, use backup endpoints \\
+\hline
+LLM API rate limits & Slow experimentation & Use local models (Llama, Mistral) as backup \\
+\hline
+Integration issues & Delays in testing & Weekly integration checkpoints, modular design \\
+\hline
+Insufficient dataset & Poor evaluation & Collect diverse CVEs early, validate with experts \\
+\hline
+\end{tabular}
+
+\section{Communication Plan}
+
+\begin{itemize}
+    \item \textbf{Weekly Meetings:} Every Monday at 10:00 AM (progress review)
+    \item \textbf{Daily Standups:} Slack/Discord channel (async updates)
+    \item \textbf{Code Reviews:} All PRs require 1 review before merging
+    \item \textbf{Emergency Contact:} Hafiz (PIC) coordinates urgent issues
+\end{itemize}
+
+\section{References}
+
+\begin{enumerate}
+    \item Kurniawan et al., "AgCyRAG: an Agentic Knowledge Graph based RAG Framework for Automated Security Analysis", RAGE-KG 2025
+    \item Kiesling et al., "The SEPSES Knowledge Graph: An Integrated Resource for Cybersecurity", ISWC 2019
+    \item SEPSES SPARQL Endpoint: \url{https://w3id.org/sepses/sparql}
+    \item AgCyRAG GitHub: \url{https://github.com/sepses/multi-agents-cykg-rag}
+\end{enumerate}
+
+\end{document}
