@@ -1,13 +1,16 @@
-# ============================================
-# SEPSES Cybersecurity Knowledge Graph
-# WORKING SPARQL Queries (Updated with Correct Properties)
-# Endpoint: https://sepses.ifs.tuwien.ac.at/sparql
-# Leave "Default Data Set Name" BLANK
-# ============================================
+## SEPSES Cybersecurity Knowledge Graph
 
-# --------------------------------------------
-# Query 1: Get 20 Recent CVE Vulnerabilities with Descriptions
-# --------------------------------------------
+- **Endpoint:** <https://sepses.ifs.tuwien.ac.at/sparql>
+- **Default dataset:** leave blank in the query form
+- **Status:** all queries verified with current property names
+
+---
+
+### Query 1: Get 20 Recent CVE Vulnerabilities with Descriptions
+
+Retrieves the latest CVEs with descriptions and timestamps.
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -23,11 +26,13 @@ WHERE {
 }
 ORDER BY DESC(?issued)
 LIMIT 20
+```
 
+---
 
-# --------------------------------------------
-# Query 2: Find High Severity Vulnerabilities (CVSS v2 Score >= 9.0)
-# --------------------------------------------
+### Query 2: Find High Severity Vulnerabilities (CVSS v2 Score >= 9.0)
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -47,11 +52,13 @@ WHERE {
 }
 ORDER BY DESC(?score)
 LIMIT 30
+```
 
+---
 
-# --------------------------------------------
-# Query 3: Find High Severity Vulnerabilities (CVSS v3 Score >= 9.0)
-# --------------------------------------------
+### Query 3: Find High Severity Vulnerabilities (CVSS v3 Score >= 9.0)
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -71,11 +78,13 @@ WHERE {
 }
 ORDER BY DESC(?score)
 LIMIT 30
+```
 
+---
 
-# --------------------------------------------
-# Query 4: Find CVEs Related to Specific Weaknesses (CWE)
-# --------------------------------------------
+### Query 4: Find CVEs Related to Specific Weaknesses (CWE)
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -94,14 +103,15 @@ WHERE {
   }
 }
 LIMIT 30
+```
 
+---
 
-# --------------------------------------------
-# Query 5: Find CVEs Affecting Specific Products (e.g., Apache)
-# --------------------------------------------
+### Query 5: Find CVEs Affecting Specific Products (e.g., Apache)
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cpe: <http://w3id.org/sepses/vocab/ref/cpe#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
 
 SELECT DISTINCT ?cveId ?productTitle ?vendor
 WHERE {
@@ -118,11 +128,13 @@ WHERE {
   FILTER(CONTAINS(LCASE(?vendor), "apache"))
 }
 LIMIT 50
+```
 
+---
 
-# --------------------------------------------
-# Query 6: Find CVEs Affecting Windows Products
-# --------------------------------------------
+### Query 6: Find CVEs Affecting Windows Products
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cpe: <http://w3id.org/sepses/vocab/ref/cpe#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -141,13 +153,14 @@ WHERE {
   FILTER(CONTAINS(LCASE(?productTitle), "windows"))
 }
 LIMIT 30
+```
 
+---
 
-# --------------------------------------------
-# Query 7: Get Complete CVE Details for Specific CVE (e.g., Heartbleed)
-# --------------------------------------------
+### Query 7: Get Complete CVE Details for Specific CVE (e.g., Heartbleed)
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
 
 SELECT ?property ?value
 WHERE {
@@ -157,11 +170,13 @@ WHERE {
          ?property ?value .
   }
 }
+```
 
+---
 
-# --------------------------------------------
-# Query 8: Count Vulnerabilities by Year (Published Date)
-# --------------------------------------------
+### Query 8: Count Vulnerabilities by Year (Published Date)
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
@@ -174,11 +189,15 @@ WHERE {
 }
 GROUP BY (YEAR(?issued))
 ORDER BY DESC(?year)
+```
 
+---
 
-# --------------------------------------------
-# Query 9: Find Recent CVEs (Last 30 days from 2019 - adjust date as needed)
-# --------------------------------------------
+### Query 9: Find Recent CVEs (Last 30 days from 2019 - adjust date as needed)
+
+Adjust the literal to shift the time window.
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -195,14 +214,15 @@ WHERE {
 }
 ORDER BY DESC(?issued)
 LIMIT 50
+```
 
+---
 
-# --------------------------------------------
-# Query 10: Find CVEs with CVSS v2 Impact Metrics
-# --------------------------------------------
+### Query 10: Find CVEs with CVSS v2 Impact Metrics
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
 
 SELECT DISTINCT ?cveId ?score ?confImpact ?integrityImpact ?availImpact
 WHERE {
@@ -220,11 +240,13 @@ WHERE {
 }
 ORDER BY DESC(?score)
 LIMIT 30
+```
 
+---
 
-# --------------------------------------------
-# Query 11: Find Critical CVEs with Complete Confidentiality Impact
-# --------------------------------------------
+### Query 11: Find Critical CVEs with Complete Confidentiality Impact
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -246,11 +268,13 @@ WHERE {
 }
 ORDER BY DESC(?score)
 LIMIT 30
+```
 
+---
 
-# --------------------------------------------
-# Query 12: Explore CWE Weaknesses with Mitigations
-# --------------------------------------------
+### Query 12: Explore CWE Weaknesses with Mitigations
+
+```sparql
 PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
 
 SELECT DISTINCT ?cweId ?cweName ?mitigationDesc
@@ -264,11 +288,13 @@ WHERE {
   }
 }
 LIMIT 20
+```
 
+---
 
-# --------------------------------------------
-# Query 13: Get CAPEC Attack Patterns
-# --------------------------------------------
+### Query 13: Get CAPEC Attack Patterns
+
+```sparql
 PREFIX capec: <http://w3id.org/sepses/vocab/ref/capec#>
 
 SELECT DISTINCT ?capecId ?capecName ?likelihood ?description
@@ -282,11 +308,13 @@ WHERE {
   }
 }
 LIMIT 20
+```
 
+---
 
-# --------------------------------------------
-# Query 14: Link CVE -> CWE -> CAPEC (Vulnerability Chain)
-# --------------------------------------------
+### Query 14: Link CVE -> CWE -> CAPEC (Vulnerability Chain)
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
 PREFIX capec: <http://w3id.org/sepses/vocab/ref/capec#>
@@ -309,11 +337,13 @@ WHERE {
   }
 }
 LIMIT 20
+```
 
+---
 
-# --------------------------------------------
-# Query 15: Count Products by Vendor
-# --------------------------------------------
+### Query 15: Count Products by Vendor
+
+```sparql
 PREFIX cpe: <http://w3id.org/sepses/vocab/ref/cpe#>
 
 SELECT ?vendor (COUNT(DISTINCT ?cpe) AS ?productCount)
@@ -327,11 +357,13 @@ WHERE {
 GROUP BY ?vendor
 ORDER BY DESC(?productCount)
 LIMIT 30
+```
 
+---
 
-# --------------------------------------------
-# Query 16: Dataset Statistics
-# --------------------------------------------
+### Query 16: Dataset Statistics
+
+```sparql
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
 PREFIX capec: <http://w3id.org/sepses/vocab/ref/capec#>
@@ -359,22 +391,22 @@ WHERE {
     GRAPH ?g4 { ?cpe a cpe:CPE . }
   }
 }
+```
 
+---
 
-# ============================================
-# KEY FINDINGS - Property Mappings:
-# ============================================
-# CVE ID: cve:id (NOT cve:cveId)
-# Description: dcterms:description (NOT cve:description)
-# Published: dcterms:issued (NOT cve:published)
-# Modified: dcterms:modified (NOT cve:modified)
-# Identifier: dcterms:identifier
-# 
-# Relationships:
-# - cve:hasCWE (link to weakness)
-# - cve:hasCPE (link to product)
-# - cve:hasCVSS2BaseMetric (CVSS v2 scores)
-# - cve:hasCVSS3BaseMetric (CVSS v3 scores)
-# - cve:hasReference (external references)
-# - cve:hasVulnerableConfiguration
-# ============================================
+## Key Property Mappings
+
+- **CVE ID:** `cve:id` (not `cve:cveId`)
+- **Description:** `dcterms:description` (not `cve:description`)
+- **Published:** `dcterms:issued`
+- **Modified:** `dcterms:modified`
+- **Identifier:** `dcterms:identifier`
+
+**Relationships**
+
+- `cve:hasCWE` → linked weakness  
+- `cve:hasCPE` → affected product  
+- `cve:hasCVSS2BaseMetric` / `cve:hasCVSS3BaseMetric` → scoring metrics  
+- `cve:hasReference` → outbound references  
+- `cve:hasVulnerableConfiguration` → configuration objects
