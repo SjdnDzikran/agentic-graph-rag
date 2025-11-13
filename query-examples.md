@@ -1,73 +1,91 @@
 # ============================================
 # SEPSES Cybersecurity Knowledge Graph
-# UPDATED SPARQL Queries for Named Graphs
+# WORKING SPARQL Queries (Updated with Correct Properties)
 # Endpoint: https://sepses.ifs.tuwien.ac.at/sparql
-# Graph IRI: Leave BLANK or use "FROM <...>" clauses
+# Leave "Default Data Set Name" BLANK
 # ============================================
 
 # --------------------------------------------
-# Query 1: Get CVE Count (Quick Test)
+# Query 1: Get 20 Recent CVE Vulnerabilities with Descriptions
 # --------------------------------------------
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
 
-SELECT (COUNT(DISTINCT ?cve) AS ?totalCVEs)
-WHERE {
-  GRAPH ?g {
-    ?cve a cve:CVE .
-  }
-}
-
-
-# --------------------------------------------
-# Query 2: Get 10 CVE Vulnerabilities (Any from named graphs)
-# --------------------------------------------
-PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
-
-SELECT DISTINCT ?cveId ?description
+SELECT DISTINCT ?cveId ?description ?issued ?modified
 WHERE {
   GRAPH ?g {
     ?cve a cve:CVE ;
          cve:id ?cveId ;
-         cve:description ?description .
+         dcterms:description ?description ;
+         dcterms:issued ?issued ;
+         dcterms:modified ?modified .
   }
 }
-LIMIT 10
+ORDER BY DESC(?issued)
+LIMIT 20
 
 
 # --------------------------------------------
-# Query 3: Find High Severity Vulnerabilities (CVSS >= 9.0)
+# Query 2: Find High Severity Vulnerabilities (CVSS v2 Score >= 9.0)
 # --------------------------------------------
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
 
 SELECT DISTINCT ?cveId ?score ?description
 WHERE {
   GRAPH ?g1 {
     ?cve a cve:CVE ;
          cve:id ?cveId ;
-         cve:description ?description ;
-         cve:hasCVSS2BaseMetric ?cvssMetric .
+         dcterms:description ?description ;
+         cve:hasCVSS2BaseMetric ?cvss2 .
   }
   GRAPH ?g2 {
-    ?cvssMetric cvss:baseScore ?score .
+    ?cvss2 cvss:baseScore ?score .
   }
   FILTER(?score >= 9.0)
 }
 ORDER BY DESC(?score)
-LIMIT 20
+LIMIT 30
 
 
 # --------------------------------------------
-# Query 4: Explore CVE with Related CWE Weaknesses
+# Query 3: Find High Severity Vulnerabilities (CVSS v3 Score >= 9.0)
 # --------------------------------------------
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
-PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
+PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
 
-SELECT DISTINCT ?cveId ?cweId ?cweName
+SELECT DISTINCT ?cveId ?score ?description
 WHERE {
   GRAPH ?g1 {
     ?cve a cve:CVE ;
          cve:id ?cveId ;
+         dcterms:description ?description ;
+         cve:hasCVSS3BaseMetric ?cvss3 .
+  }
+  GRAPH ?g2 {
+    ?cvss3 cvss:baseScore ?score .
+  }
+  FILTER(?score >= 9.0)
+}
+ORDER BY DESC(?score)
+LIMIT 30
+
+
+# --------------------------------------------
+# Query 4: Find CVEs Related to Specific Weaknesses (CWE)
+# --------------------------------------------
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?cveId ?cweId ?cweName ?cveDescription
+WHERE {
+  GRAPH ?g1 {
+    ?cve a cve:CVE ;
+         cve:id ?cveId ;
+         dcterms:description ?cveDescription ;
          cve:hasCWE ?cweResource .
   }
   GRAPH ?g2 {
@@ -75,86 +93,17 @@ WHERE {
                  cwe:name ?cweName .
   }
 }
-LIMIT 20
+LIMIT 30
 
 
 # --------------------------------------------
-# Query 5: Find Products by Vendor (e.g., Apache)
-# --------------------------------------------
-PREFIX cpe: <http://w3id.org/sepses/vocab/ref/cpe#>
-
-SELECT DISTINCT ?productTitle ?vendor
-WHERE {
-  GRAPH ?g {
-    ?cpe a cpe:CPE ;
-         cpe:title ?productTitle ;
-         cpe:hasVendor ?vendorObj .
-    ?vendorObj cpe:vendorName ?vendor .
-    FILTER(CONTAINS(LCASE(?vendor), "apache"))
-  }
-}
-LIMIT 50
-
-
-# --------------------------------------------
-# Query 6: Count CPEs by Vendor
-# --------------------------------------------
-PREFIX cpe: <http://w3id.org/sepses/vocab/ref/cpe#>
-
-SELECT ?vendor (COUNT(DISTINCT ?cpe) AS ?productCount)
-WHERE {
-  GRAPH ?g {
-    ?cpe a cpe:CPE ;
-         cpe:hasVendor ?vendorObj .
-    ?vendorObj cpe:vendorName ?vendor .
-  }
-}
-GROUP BY ?vendor
-ORDER BY DESC(?productCount)
-LIMIT 20
-
-
-# --------------------------------------------
-# Query 7: Get All CWE Weaknesses
-# --------------------------------------------
-PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
-
-SELECT DISTINCT ?cweId ?cweName ?description
-WHERE {
-  GRAPH ?g {
-    ?cwe a cwe:CWE ;
-         cwe:id ?cweId ;
-         cwe:name ?cweName ;
-         cwe:description ?description .
-  }
-}
-LIMIT 20
-
-
-# --------------------------------------------
-# Query 8: Get CAPEC Attack Patterns
-# --------------------------------------------
-PREFIX capec: <http://w3id.org/sepses/vocab/ref/capec#>
-
-SELECT DISTINCT ?capecId ?capecName ?likelihood
-WHERE {
-  GRAPH ?g {
-    ?capec a capec:CAPEC ;
-           capec:id ?capecId ;
-           capec:name ?capecName ;
-           capec:likelihoodOfAttack ?likelihood .
-  }
-}
-LIMIT 20
-
-
-# --------------------------------------------
-# Query 9: Find CVEs for Specific Product (e.g., Windows)
+# Query 5: Find CVEs Affecting Specific Products (e.g., Apache)
 # --------------------------------------------
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cpe: <http://w3id.org/sepses/vocab/ref/cpe#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
 
-SELECT DISTINCT ?cveId ?productTitle
+SELECT DISTINCT ?cveId ?productTitle ?vendor
 WHERE {
   GRAPH ?g1 {
     ?cve a cve:CVE ;
@@ -162,15 +111,145 @@ WHERE {
          cve:hasCPE ?cpeResource .
   }
   GRAPH ?g2 {
-    ?cpeResource cpe:title ?productTitle .
-    FILTER(CONTAINS(LCASE(?productTitle), "windows"))
+    ?cpeResource cpe:title ?productTitle ;
+                 cpe:hasVendor ?vendorObj .
+    ?vendorObj cpe:vendorName ?vendor .
   }
+  FILTER(CONTAINS(LCASE(?vendor), "apache"))
+}
+LIMIT 50
+
+
+# --------------------------------------------
+# Query 6: Find CVEs Affecting Windows Products
+# --------------------------------------------
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX cpe: <http://w3id.org/sepses/vocab/ref/cpe#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?cveId ?productTitle ?description
+WHERE {
+  GRAPH ?g1 {
+    ?cve a cve:CVE ;
+         cve:id ?cveId ;
+         dcterms:description ?description ;
+         cve:hasCPE ?cpeResource .
+  }
+  GRAPH ?g2 {
+    ?cpeResource cpe:title ?productTitle .
+  }
+  FILTER(CONTAINS(LCASE(?productTitle), "windows"))
 }
 LIMIT 30
 
 
 # --------------------------------------------
-# Query 10: Explore Weakness Mitigations
+# Query 7: Get Complete CVE Details for Specific CVE (e.g., Heartbleed)
+# --------------------------------------------
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?property ?value
+WHERE {
+  GRAPH ?g {
+    ?cve a cve:CVE ;
+         cve:id "CVE-2014-0160" ;
+         ?property ?value .
+  }
+}
+
+
+# --------------------------------------------
+# Query 8: Count Vulnerabilities by Year (Published Date)
+# --------------------------------------------
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT (YEAR(?issued) AS ?year) (COUNT(DISTINCT ?cve) AS ?count)
+WHERE {
+  GRAPH ?g {
+    ?cve a cve:CVE ;
+         dcterms:issued ?issued .
+  }
+}
+GROUP BY (YEAR(?issued))
+ORDER BY DESC(?year)
+
+
+# --------------------------------------------
+# Query 9: Find Recent CVEs (Last 30 days from 2019 - adjust date as needed)
+# --------------------------------------------
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT ?cveId ?description ?issued
+WHERE {
+  GRAPH ?g {
+    ?cve a cve:CVE ;
+         cve:id ?cveId ;
+         dcterms:description ?description ;
+         dcterms:issued ?issued .
+  }
+  FILTER(?issued >= "2019-06-01T00:00:00"^^xsd:dateTime)
+}
+ORDER BY DESC(?issued)
+LIMIT 50
+
+
+# --------------------------------------------
+# Query 10: Find CVEs with CVSS v2 Impact Metrics
+# --------------------------------------------
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?cveId ?score ?confImpact ?integrityImpact ?availImpact
+WHERE {
+  GRAPH ?g1 {
+    ?cve a cve:CVE ;
+         cve:id ?cveId ;
+         cve:hasCVSS2BaseMetric ?cvss2 .
+  }
+  GRAPH ?g2 {
+    ?cvss2 cvss:baseScore ?score ;
+           cvss:confidentialityImpact ?confImpact ;
+           cvss:integrityImpact ?integrityImpact ;
+           cvss:availabilityImpact ?availImpact .
+  }
+}
+ORDER BY DESC(?score)
+LIMIT 30
+
+
+# --------------------------------------------
+# Query 11: Find Critical CVEs with Complete Confidentiality Impact
+# --------------------------------------------
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?cveId ?score ?description
+WHERE {
+  GRAPH ?g1 {
+    ?cve a cve:CVE ;
+         cve:id ?cveId ;
+         dcterms:description ?description ;
+         cve:hasCVSS2BaseMetric ?cvss2 .
+  }
+  GRAPH ?g2 {
+    ?cvss2 cvss:baseScore ?score ;
+           cvss:confidentialityImpact ?confImpact .
+  }
+  FILTER(?confImpact = "COMPLETE")
+  FILTER(?score >= 7.0)
+}
+ORDER BY DESC(?score)
+LIMIT 30
+
+
+# --------------------------------------------
+# Query 12: Explore CWE Weaknesses with Mitigations
 # --------------------------------------------
 PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
 
@@ -188,7 +267,70 @@ LIMIT 20
 
 
 # --------------------------------------------
-# Query 11: Dataset Statistics - Count Everything
+# Query 13: Get CAPEC Attack Patterns
+# --------------------------------------------
+PREFIX capec: <http://w3id.org/sepses/vocab/ref/capec#>
+
+SELECT DISTINCT ?capecId ?capecName ?likelihood ?description
+WHERE {
+  GRAPH ?g {
+    ?capec a capec:CAPEC ;
+           capec:id ?capecId ;
+           capec:name ?capecName .
+    OPTIONAL { ?capec capec:likelihoodOfAttack ?likelihood . }
+    OPTIONAL { ?capec capec:description ?description . }
+  }
+}
+LIMIT 20
+
+
+# --------------------------------------------
+# Query 14: Link CVE -> CWE -> CAPEC (Vulnerability Chain)
+# --------------------------------------------
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
+PREFIX capec: <http://w3id.org/sepses/vocab/ref/capec#>
+
+SELECT DISTINCT ?cveId ?cweId ?cweName ?capecId ?attackPattern
+WHERE {
+  GRAPH ?g1 {
+    ?cve a cve:CVE ;
+         cve:id ?cveId ;
+         cve:hasCWE ?cweResource .
+  }
+  GRAPH ?g2 {
+    ?cweResource cwe:id ?cweId ;
+                 cwe:name ?cweName ;
+                 cwe:hasCAPEC ?capecResource .
+  }
+  GRAPH ?g3 {
+    ?capecResource capec:id ?capecId ;
+                   capec:name ?attackPattern .
+  }
+}
+LIMIT 20
+
+
+# --------------------------------------------
+# Query 15: Count Products by Vendor
+# --------------------------------------------
+PREFIX cpe: <http://w3id.org/sepses/vocab/ref/cpe#>
+
+SELECT ?vendor (COUNT(DISTINCT ?cpe) AS ?productCount)
+WHERE {
+  GRAPH ?g {
+    ?cpe a cpe:CPE ;
+         cpe:hasVendor ?vendorObj .
+    ?vendorObj cpe:vendorName ?vendor .
+  }
+}
+GROUP BY ?vendor
+ORDER BY DESC(?productCount)
+LIMIT 30
+
+
+# --------------------------------------------
+# Query 16: Dataset Statistics
 # --------------------------------------------
 PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
 PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
@@ -219,60 +361,20 @@ WHERE {
 }
 
 
-# --------------------------------------------
-# Query 12: Simple Exploration - See What Properties CVEs Have
-# --------------------------------------------
-PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
-
-SELECT DISTINCT ?property (COUNT(?value) AS ?count)
-WHERE {
-  GRAPH ?g {
-    ?cve a cve:CVE ;
-         ?property ?value .
-  }
-}
-GROUP BY ?property
-ORDER BY DESC(?count)
-
-
-# --------------------------------------------
-# Query 13: Get One Complete CVE Example
-# --------------------------------------------
-PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
-
-SELECT DISTINCT ?cve ?property ?value
-WHERE {
-  GRAPH ?g {
-    ?cve a cve:CVE .
-    ?cve ?property ?value .
-  }
-}
-LIMIT 50
-
-
 # ============================================
-# ALTERNATIVE: If you know a specific CVE ID
+# KEY FINDINGS - Property Mappings:
 # ============================================
-# Query 14: Get Specific CVE by ID (e.g., CVE-2014-0160 - Heartbleed)
-# --------------------------------------------
-PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
-
-SELECT DISTINCT ?cve ?property ?value
-WHERE {
-  GRAPH ?g {
-    ?cve a cve:CVE ;
-         cve:id "CVE-2014-0160" ;
-         ?property ?value .
-  }
-}
-
-
-# ============================================
-# TIPS FOR NAMED GRAPH QUERIES:
-# ============================================
-# 1. Always use "GRAPH ?g { ... }" to search across all graphs
-# 2. Use different graph variables (?g1, ?g2) when joining data
-# 3. Use DISTINCT to avoid duplicate results
-# 4. Start with COUNT queries to verify data exists
-# 5. Leave the "Default Data Set Name" field BLANK in the interface
+# CVE ID: cve:id (NOT cve:cveId)
+# Description: dcterms:description (NOT cve:description)
+# Published: dcterms:issued (NOT cve:published)
+# Modified: dcterms:modified (NOT cve:modified)
+# Identifier: dcterms:identifier
+# 
+# Relationships:
+# - cve:hasCWE (link to weakness)
+# - cve:hasCPE (link to product)
+# - cve:hasCVSS2BaseMetric (CVSS v2 scores)
+# - cve:hasCVSS3BaseMetric (CVSS v3 scores)
+# - cve:hasReference (external references)
+# - cve:hasVulnerableConfiguration
 # ============================================
