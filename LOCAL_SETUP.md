@@ -1,7 +1,7 @@
 # Local Environment Setup
 
-Follow these steps to recreate the PDF-processing environment used in this
-repository.
+Follow these steps to recreate the Agentic Graph RAG dev environment used in
+this repository.
 
 ## 1. Prerequisites
 - Python 3.12 (or a compatible Python 3.9+ interpreter)
@@ -29,18 +29,25 @@ python3 -m venv .venv
 Your shell prompt will show `(.venv)` once the environment is active.
 
 ## 4. Install Dependencies
-With the virtual environment activated:
+From the repository root (the same directory that contains `requirements.txt`)
+and with the virtual environment activated:
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
 ## 5. Verify the Setup
-Run a quick Python check to ensure `pypdf` is available:
+Confirm that the core libraries installed correctly:
 ```bash
 python - <<'PY'
-from pypdf import PdfReader
-print("PyPDF ready with", PdfReader.__name__)
+import langgraph, langchain, neo4j, rdflib
+from sentence_transformers import SentenceTransformer
+from SPARQLWrapper import SPARQLWrapper
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+print("LangGraph version:", langgraph.__version__)
+print("LangChain version:", langchain.__version__)
+print("Loaded embedding model:", model.get_sentence_embedding_dimension(), "dims")
 PY
 ```
 
