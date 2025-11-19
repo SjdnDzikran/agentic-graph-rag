@@ -112,7 +112,7 @@ def print_results(results):
 
 if __name__ == "__main__":
     # Initialize agent
-    agent = CVEVectorAgent("bolt://localhost:7687", "neo4j", "admin123")
+    agent = CVEVectorAgent("neo4j+s://918549c2.databases.neo4j.io", "neo4j", "fTZMishAH4cwHlcR6NEv2cCsvli2KNDaMN-BKUNSKPs")
     
     try:
         # Example 1: Basic search

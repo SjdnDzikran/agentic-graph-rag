@@ -1,9 +1,9 @@
 from neo4j import GraphDatabase
 import json
 
-NEO4J_URI = "bolt://localhost:7687"
+NEO4J_URI = "neo4j+s://918549c2.databases.neo4j.io"
 NEO4J_USER = "neo4j"
-NEO4J_PASS = "admin123"
+NEO4J_PASS = "fTZMishAH4cwHlcR6NEv2cCsvli2KNDaMN-BKUNSKPs"
 
 def create_vector_index(driver):
     cypher = """
