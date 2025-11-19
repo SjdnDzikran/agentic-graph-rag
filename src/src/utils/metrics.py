@@ -1,4 +1,3 @@
-# src/utils/metrics.py
 import re
 from typing import List, Dict, Any
 import math
@@ -48,24 +47,47 @@ def calculate_spearman_rank_correlation(x: List[float], y: List[float]) -> float
     rho = 1 - (6 * d_squared_sum) / (n * (n**2 - 1))
     return rho
 
-def calculate_classification_metrics(y_true: List[str], y_pred: List[str]):
+def calculate_classification_metrics(y_true: List[str], y_pred: List[str]) -> Dict[str, float]:
     """
     Calculates simplified Precision, Recall, and Accuracy for severity labels.
+    Macro-averaged over classes.
     """
     classes = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
     metrics = {}
     
-    correct_predictions = 0
-    for t, p in zip(y_true, y_pred):
-        if t == p:
-            correct_predictions += 1
-            
-    metrics['accuracy'] = correct_predictions / len(y_true) if y_true else 0
+    # 1. Accuracy
+    correct_predictions = sum(1 for t, p in zip(y_true, y_pred) if t == p)
+    metrics['accuracy'] = correct_predictions / len(y_true) if y_true else 0.0
     
-    # Macro-average Precision/Recall
+    # 2. Macro-average Precision & Recall
     precisions = []
     recalls = []
     
     for cls in classes:
+        # True Positives (TP): Predicted cls AND True cls
         tp = sum(1 for t, p in zip(y_true, y_pred) if t == cls and p == cls)
-        fp
+        
+        # False Positives (FP): Predicted cls BUT True is NOT cls
+        fp = sum(1 for t, p in zip(y_true, y_pred) if t != cls and p == cls)
+        
+        # False Negatives (FN): True is cls BUT Predicted NOT cls
+        fn = sum(1 for t, p in zip(y_true, y_pred) if t == cls and p != cls)
+        
+        # Calculate per-class metrics
+        p_score = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        r_score = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        
+        precisions.append(p_score)
+        recalls.append(r_score)
+
+    # Average across all classes
+    metrics['precision'] = sum(precisions) / len(classes) if classes else 0.0
+    metrics['recall'] = sum(recalls) / len(classes) if classes else 0.0
+    
+    # F1 Score (Harmonic mean of macro-precision and macro-recall)
+    if (metrics['precision'] + metrics['recall']) > 0:
+        metrics['f1'] = 2 * (metrics['precision'] * metrics['recall']) / (metrics['precision'] + metrics['recall'])
+    else:
+        metrics['f1'] = 0.0
+        
+    return metrics

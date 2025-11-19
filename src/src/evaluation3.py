@@ -22,7 +22,7 @@ logging.getLogger("src.graph.workflow").setLevel(logging.ERROR)
 async def get_agentic_response(question: str):
     """Helper to invoke the Agentic Graph RAG"""
     inputs = {"question": question, "original_question": question}
-    config = {"recursion_limit": 50}
+    config = {"recursion_limit": 5}
     
     try:
         # ainvoke is the async method for LangGraph applications

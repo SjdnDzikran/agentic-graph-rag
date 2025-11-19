@@ -10,9 +10,10 @@ from langchain_core.documents import Document
 # (Kita load manual agar tidak trigger error dari settings.py)
 load_dotenv("src/.env") 
 
-url = os.getenv("NEO4J_AURA")
-username = os.getenv("NEO4J_AURA_USERNAME")
-password = os.getenv("NEO4J_AURA_PASSWORD")
+url = "neo4j+s://918549c2.databases.neo4j.io"
+username = "neo4j"
+password = "fTZMishAH4cwHlcR6NEv2cCsvli2KNDaMN-BKUNSKPs"
+
 
 print(f"Connecting to Neo4j at {url}...")
 

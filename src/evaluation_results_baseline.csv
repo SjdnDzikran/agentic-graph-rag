@@ -1,0 +1,17 @@
+cve_id,ground_truth_score,ground_truth_severity,normal_rag_answer,rag_latency
+CVE-2014-3566,3.4,LOW,"Based solely on the provided context:
+
+- **Severity**: LOW
+- **Risk Score**: 3.4",7.60316801071167
+CVE-2015-7548,,,"Based solely on the provided context:
+
+**Severity:** Not provided  
+**Score:** Not provided  
+
+The context lists CVE-2015-7548 but does not include any Severity or Score information for this specific CVE. Therefore, the answer is: **I do not know.**",40.60401153564453
+CVE-2002-0059,9.8,CRITICAL,"Based solely on the provided context:
+
+- **Severity:** CRITICAL  
+- **Risk Score:** 9.8  
+
+This information is explicitly stated in the context for CVE-2002-0059.",18.68141770362854
