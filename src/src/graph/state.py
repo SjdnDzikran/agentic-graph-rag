@@ -1,12 +1,36 @@
-from typing import List, TypedDict, Optional
+# src/graph/state.py
+from typing import List, Optional
+from typing_extensions import TypedDict, Annotated
+from langgraph.graph import add_messages
 
-class GraphState(TypedDict):
-    """
-    Represents the state of our graph.
-    """
+class AgentState(TypedDict):
     question: str
-    generation: str
-    documents: List[str]
-    # --- Tambahkan field baru di bawah ini ---
-    is_relevant: bool       # Apakah pertanyaan relevan dengan vuln assessment?
-    guardrail_reason: str   # Alasan kenapa ditolak/diterima
+    original_question: str
+    is_relevant: bool
+    # Tambahan: Menyimpan alasan penolakan atau penerimaan dari guardrails
+    guardrail_reason: Optional[str]
+    
+    is_log_question: bool
+    is_cskg_required: bool
+    
+    log_vector_context: Optional[str]
+    log_cypher_context: Optional[List[dict]]
+    
+    latest_vector_context: Optional[List[dict]]
+    latest_cypher_context: Optional[List[dict]]
+    
+    generated_question_for_rdf: Optional[str]
+    mcp_rdf_context: Optional[str]
+    
+    answer: Optional[str]
+    cypher_query: Optional[str]
+    error: Optional[str]
+    messages: Annotated[list, add_messages]
+    
+    # reflection state
+    cypher_iteration_count: int
+    vector_iteration_count: int
+    vector_answer_sufficient: bool 
+    cypher_answer_sufficient: bool 
+    
+    max_iterations: int

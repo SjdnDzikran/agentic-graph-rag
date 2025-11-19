@@ -1,63 +1,50 @@
+# src/agents/guardrails_agent.py
+from typing import Literal, Optional
+from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_openai import ChatOpenAI
-from src.graph.state import GraphState
+from src.config.settings import llm
 
-# 1. Definisikan Struktur Output agar jawabannya pasti (True/False)
-class GuardrailsOutput(BaseModel):
-    is_relevant: bool = Field(
-        description="True if the query is related to vulnerability assessment, cybersecurity, CVEs, or software security. False otherwise."
+class GuardrailsRouterOutput(BaseModel):
+    """
+    Combined output for guardrails checking and routing decisions
+    """
+    decision: Literal["relevant", "irrelevant"] = Field(
+        description="Determine if the question falls within the scope of Vulnerability Assessment (Finding, Scoring, Prioritizing, Explaining)."
     )
     reason: str = Field(
-        description="Brief explanation why the query is relevant or not."
+        description="Brief explanation of why the question is relevant or irrelevant."
+    )
+    datasource: Literal["log_analysis", "cyber_knowledge"] = Field(
+        description="Routes the question. 'log_analysis' for finding vulnerabilities in system logs/events. 'cyber_knowledge' for scoring, prioritizing, explaining CVEs/CWEs or general security concepts."
     )
 
-def guardrails_node(state: GraphState):
-    """
-    Agent untuk memvalidasi apakah pertanyaan user relevan dengan Vulnerability Assessment.
-    """
-    print("---GUARDRAILS CHECK---")
-    question = state["question"]
+guardrails_router_prompt = ChatPromptTemplate.from_messages([
+    (
+        "system", 
+        """
+        You are the Main Guardrail Agent for a specialized **Vulnerability Assessment System**.
+        Your job is to strictly filter user queries and route them correctly.
 
-    # 2. Setup LLM (Gunakan model yang cepat & murah, misal gpt-3.5-turbo atau gpt-4o-mini)
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-    
-    # 3. Prompt Khusus Vulnerability Assessment
-    system_prompt = """You are a strict Guardrails Agent for a Vulnerability Assessment System.
-    Your job is to filter user queries.
-    
-    ALLOWED TOPICS (Return is_relevant=True):
-    - Finding/Detecting software vulnerabilities (CVEs, bugs, flaws).
-    - Scoring vulnerabilities (CVSS scores, severity levels).
-    - Prioritizing vulnerabilities (risk assessment, what to fix first).
-    - Explaining vulnerabilities (how an exploit works, remediation, patches).
-    - General cybersecurity concepts related to defense and analysis.
-    
-    FORBIDDEN TOPICS (Return is_relevant=False):
-    - General conversational chit-chat (e.g., "How are you?", "Weather").
-    - Creating malicious code or exploit scripts for illegal purposes (Finding/Explaining is OK, Creating attacks is NOT).
-    - Non-technical topics (Cooking, Sports, Politics).
-    
-    Analyze the user question and determine if it fits the ALLOWED TOPICS.
-    """
+        **ALLOWED SCOPE (Vulnerability Assessment):**
+        You should only allow questions related to:
+        1. **Finding/Detection**: Identifying vulnerabilities, bugs, flaws, or suspicious patterns in software/logs (e.g., "Find SQL injection attempts in the logs", "What CVEs affect version X?").
+        2. **Scoring**: Assessing severity, CVSS scores, or impact levels (e.g., "What is the CVSS score of CVE-2023-1234?", "Is this critical?").
+        3. **Prioritizing**: Determining which vulnerabilities to fix first based on risk (e.g., "Which patch should I apply first?").
+        4. **Explaining**: Understanding how a vulnerability works, technical details, and remediation/mitigation (e.g., "Explain how buffer overflow works", "How to fix Log4Shell").
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("human", "{question}"),
-    ])
+        **FORBIDDEN TOPICS (Return 'irrelevant'):**
+        - General chit-chat (e.g., "How are you?", "Who made you?").
+        - Questions unrelated to cybersecurity (e.g., "What is the weather?", "Write a poem").
+        - Requests to create malicious exploits for illegal attacks (Defensive analysis is OK, Offensive/Malicious creation is NOT).
 
-    # 4. Chain dengan Structured Output
-    structured_llm = llm.with_structured_output(GuardrailsOutput)
-    chain = prompt | structured_llm
+        **ROUTING RULES (If relevant):**
+        - **log_analysis**: Use this if the user wants to search for evidence of vulnerabilities or attacks inside **system logs**, specific events, IP addresses, or user activities.
+        - **cyber_knowledge**: Use this for questions about **knowledge** concepts, specific CVE definitions, scoring, standard frameworks (MITRE, CAPEC), or best practices.
 
-    result = chain.invoke({"question": question})
+        Analyze the question carefully.
+        """
+    ),
+    ("human", "Question: {question}"),
+])
 
-    # 5. Simpan keputusan ke State
-    print(f"---GUARDRAILS DECISION: {result.is_relevant} ({result.reason})---")
-    
-    return {
-        "is_relevant": result.is_relevant,
-        "guardrail_reason": result.reason,
-        # Jika tidak relevan, kita bisa langsung isi 'generation' dengan pesan penolakan
-        "generation": result.reason if not result.is_relevant else state.get("generation")
-    }
+guardrails_router_chain = guardrails_router_prompt | llm.with_structured_output(GuardrailsRouterOutput)
