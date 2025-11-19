@@ -5,11 +5,14 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_neo4j import Neo4jGraph
 from langchain_neo4j.vectorstores.neo4j_vector import Neo4jVector
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 
 load_dotenv()
 
 # --- Environment Variables ---
 os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
+# Ambil Google API Key
+google_api_key = os.getenv("GOOGLE_API_KEY")
 
 # Neo4j
 neo4j_uri = os.environ.get("NEO4J_AURA")
@@ -24,6 +27,21 @@ os.environ["LANGCHAIN_ENDPOINT"] = os.environ.get("LANGCHAIN_ENDPOINT", "")
 
 # --- LLM init ---
 llm = ChatOpenAI(temperature=0, model_name="gpt-4o")
+
+if not google_api_key:
+    raise ValueError("GOOGLE_API_KEY kosong! Pastikan file .env sudah diisi key Gemini.")
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash",
+    temperature=0,
+    google_api_key=google_api_key
+)
+
+# 3. Setup Embeddings (Pengganti OpenAIEmbeddings)
+embeddings = GoogleGenerativeAIEmbeddings(
+    model="models/embedding-001",
+    google_api_key=google_api_key
+)
 
 # Koneksi ke DB Lokal (MITRE ATT&CK)
 graph = Neo4jGraph(
