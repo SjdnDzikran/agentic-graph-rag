@@ -1161,17 +1161,29 @@ def search_cves_by_keyword(keyword: str, ctx: Context, include_description: bool
     """
     query = f"""
     PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+    PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
     
-    SELECT DISTINCT ?cveId ?description WHERE {{
-        GRAPH ?g {{
+    SELECT DISTINCT ?cveId ?description ?score WHERE {{
+        GRAPH ?g1 {{
             ?cve a cve:CVE ;
                  cve:id ?cveId ;
                  dcterms:description ?description .
             FILTER(CONTAINS(LCASE(?description), LCASE("{keyword}")))
         }}
+        OPTIONAL {{
+            GRAPH ?g2 {{
+                {{
+                    ?cve cve:hasCVSS3BaseMetric ?cvss3 .
+                    ?cvss3 cvss:baseScore ?score .
+                }} UNION {{
+                    ?cve cve:hasCVSS2BaseMetric ?cvss2 .
+                    ?cvss2 cvss:baseScore ?score .
+                }}
+            }}
+        }}
     }}
-    ORDER BY ?cveId
+    ORDER BY DESC(?score) ?cveId
     LIMIT 50
     """
     
@@ -1196,7 +1208,7 @@ def get_cves_by_cvss_score(min_score: float, max_score: float, ctx:Context, incl
         PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
         PREFIX dcterms: <http://purl.org/dc/terms/>
         
-        SELECT DISTINCT ?cveId ?description ?baseScore WHERE {{
+        SELECT DISTINCT ?cveId ?score ?description WHERE {{
             GRAPH ?g1 {{
                 ?cve a cve:CVE ;
                      cve:id ?cveId ;
@@ -1204,12 +1216,12 @@ def get_cves_by_cvss_score(min_score: float, max_score: float, ctx:Context, incl
                      cve:hasCVSS3BaseMetric ?cvss3 .
             }}
             GRAPH ?g2 {{
-                ?cvss3 cvss:baseScore ?baseScore .
+                ?cvss3 cvss:baseScore ?score .
             }}
-            FILTER(?baseScore >= {min_score} && ?baseScore <= {max_score})
+            FILTER(?score >= {min_score} && ?score <= {max_score})
         }}
-        ORDER BY DESC(?baseScore)
-        LIMIT 50
+        ORDER BY DESC(?score)
+        LIMIT 30
         """
     
     return execute_sparql_query(query, ctx, include_description)
@@ -1227,7 +1239,7 @@ def get_high_severity_cves(ctx: Context, include_description: bool = False) -> s
     PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
     
-    SELECT DISTINCT ?cveId ?description ?baseScore WHERE {
+    SELECT DISTINCT ?cveId ?score ?description WHERE {
         GRAPH ?g1 {
             ?cve a cve:CVE ;
                  cve:id ?cveId ;
@@ -1235,12 +1247,12 @@ def get_high_severity_cves(ctx: Context, include_description: bool = False) -> s
                  cve:hasCVSS3BaseMetric ?cvss3 .
         }
         GRAPH ?g2 {
-            ?cvss3 cvss:baseScore ?baseScore .
+            ?cvss3 cvss:baseScore ?score .
         }
-        FILTER(?baseScore >= 7.0)
+        FILTER(?score >= 7.0)
     }
-    ORDER BY DESC(?baseScore)
-    LIMIT 50
+    ORDER BY DESC(?score)
+    LIMIT 30
     """
     
     return execute_sparql_query(query, ctx, include_description)
@@ -1258,7 +1270,7 @@ def get_critical_cves(ctx: Context, include_description: bool = False) -> str:
     PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
     
-    SELECT DISTINCT ?cveId ?description ?baseScore WHERE {
+    SELECT DISTINCT ?cveId ?score ?description WHERE {
         GRAPH ?g1 {
             ?cve a cve:CVE ;
                  cve:id ?cveId ;
@@ -1266,12 +1278,12 @@ def get_critical_cves(ctx: Context, include_description: bool = False) -> str:
                  cve:hasCVSS3BaseMetric ?cvss3 .
         }
         GRAPH ?g2 {
-            ?cvss3 cvss:baseScore ?baseScore .
+            ?cvss3 cvss:baseScore ?score .
         }
-        FILTER(?baseScore >= 9.0)
+        FILTER(?score >= 9.0)
     }
-    ORDER BY DESC(?baseScore)
-    LIMIT 50
+    ORDER BY DESC(?score)
+    LIMIT 30
     """
     
     return execute_sparql_query(query, ctx, include_description)
@@ -1384,6 +1396,102 @@ def get_cves_by_year(year: int, ctx: Context, include_description: bool = False)
     """
     
     return execute_sparql_query(query, ctx, include_description)
+
+#################################################################
+# MCP Resources - Schema Documentation
+#################################################################
+
+@mcp.resource("sepses://schema")
+def get_sepses_schema() -> str:
+    """Get the SEPSES Cybersecurity Knowledge Graph schema documentation.
+    
+    This resource provides the correct namespace URIs and property mappings
+    for querying the SEPSES endpoint.
+    """
+    return """
+# SEPSES Cybersecurity Knowledge Graph Schema
+
+## Correct Namespace URIs (ALL must include /ref/ in path)
+```
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
+PREFIX cpe: <http://w3id.org/sepses/vocab/ref/cpe#>
+PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
+PREFIX capec: <http://w3id.org/sepses/vocab/ref/capec#>
+PREFIX attack: <http://w3id.org/sepses/vocab/ref/attack#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+```
+
+## CVE Properties (CRITICAL - Use these exact property names)
+- **CVE ID:** `cve:id` (NOT cve:cveId)
+- **Description:** `dcterms:description` (NOT cve:description or schema:description)
+- **Published Date:** `dcterms:issued` (NOT dcterms:created or nvd:publishedDate)
+- **Modified Date:** `dcterms:modified`
+
+## CVE Relationships
+- **CVSS v2:** `cve:hasCVSS2BaseMetric` (links to CVSS v2 metric object)
+- **CVSS v3:** `cve:hasCVSS3BaseMetric` (links to CVSS v3 metric object)
+- **CWE:** `cve:hasCWE` (links to weakness)
+- **CPE:** `cve:hasCPE` (links to affected product)
+- **References:** `cve:hasReference`
+
+## CVSS Properties
+- **Base Score:** `cvss:baseScore` (decimal value, NOT nvd:cvssV3BaseScore)
+- **Confidentiality Impact:** `cvss:confidentialityImpact`
+- **Integrity Impact:** `cvss:integrityImpact`
+- **Availability Impact:** `cvss:availabilityImpact`
+
+## Query Pattern Requirements
+ALL CVE queries MUST use GRAPH patterns:
+```sparql
+GRAPH ?g {
+  ?cve a cve:CVE ;
+       cve:id ?cveId ;
+       dcterms:description ?description .
+}
+```
+
+For CVSS queries, use separate GRAPH blocks:
+```sparql
+GRAPH ?g1 {
+  ?cve a cve:CVE ;
+       cve:id ?cveId ;
+       cve:hasCVSS3BaseMetric ?cvss3 .
+}
+GRAPH ?g2 {
+  ?cvss3 cvss:baseScore ?baseScore .
+}
+```
+
+## Example: Finding OpenSSL CVEs by CVSS Score
+```sparql
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT DISTINCT ?cveId ?description ?baseScore WHERE {
+  GRAPH ?g1 {
+    ?cve a cve:CVE ;
+         cve:id ?cveId ;
+         dcterms:description ?description ;
+         cve:hasCVSS3BaseMetric ?cvss3 .
+  }
+  GRAPH ?g2 {
+    ?cvss3 cvss:baseScore ?baseScore .
+  }
+  FILTER(CONTAINS(LCASE(?description), "openssl"))
+  FILTER(?baseScore >= 7.0)
+}
+ORDER BY DESC(?baseScore)
+```
+
+## IMPORTANT: What NOT to use
+- ❌ `nvd:` namespace (doesn't exist in SEPSES)
+- ❌ `schema:description` (use dcterms:description)
+- ❌ `cve:cveId` (use cve:id)
+- ❌ `nvd:publishedDate` (use dcterms:issued)
+- ❌ `NOW()` function (not supported, calculate dates in Python)
+"""
 
 # Run the server
 if __name__ == "__main__":
