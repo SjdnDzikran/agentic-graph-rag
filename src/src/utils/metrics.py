@@ -1,3 +1,4 @@
+# src/utils/metrics.py
 import re
 from typing import List, Dict, Any
 import math
@@ -80,13 +81,16 @@ def calculate_classification_metrics(y_true: List[str], y_pred: List[str]) -> Di
         precisions.append(p_score)
         recalls.append(r_score)
 
-    # Average across all classes
-    metrics['precision'] = sum(precisions) / len(classes) if classes else 0.0
-    metrics['recall'] = sum(recalls) / len(classes) if classes else 0.0
+    # Average across all classes (Macro) - Kunci diubah menjadi macro_precision/recall
+    metrics['macro_precision'] = sum(precisions) / len(classes) if classes else 0.0
+    metrics['macro_recall'] = sum(recalls) / len(classes) if classes else 0.0
     
     # F1 Score (Harmonic mean of macro-precision and macro-recall)
-    if (metrics['precision'] + metrics['recall']) > 0:
-        metrics['f1'] = 2 * (metrics['precision'] * metrics['recall']) / (metrics['precision'] + metrics['recall'])
+    mp = metrics['macro_precision']
+    mr = metrics['macro_recall']
+    
+    if (mp + mr) > 0:
+        metrics['f1'] = 2 * (mp * mr) / (mp + mr)
     else:
         metrics['f1'] = 0.0
         
