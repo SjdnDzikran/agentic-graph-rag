@@ -1178,6 +1178,7 @@ def get_high_severity_cves(ctx: Context, include_description: bool = False) -> s
     PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
     PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     
     SELECT ?cve ?description ?baseScore WHERE {
         ?cve a cve:CVE .
@@ -1204,6 +1205,7 @@ def get_critical_cves(ctx: Context, include_description: bool = False) -> str:
     PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
     PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     
     SELECT ?cve ?description ?baseScore WHERE {
         ?cve a cve:CVE .
@@ -1265,6 +1267,7 @@ def get_recent_cves(days: int = 30, ctx: Context = None, include_description: bo
     PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
     PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     
     SELECT ?cve ?title ?publishedDate ?baseScore WHERE {{
         ?cve a cve:CVE .

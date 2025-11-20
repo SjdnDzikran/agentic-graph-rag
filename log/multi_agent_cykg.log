@@ -27,3 +27,21 @@ Error during MCP agent execution: MCP config file not found at /home/dzikran/UGM
 2025-11-20 07:36:23,573 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
 There are no critical OpenSSL CVEs (CVSS score >= 9.0) from the last 5 years in the knowledge base. I will now search for high severity OpenSSL CVEs (CVSS score >= 7.0) from the last 5 years.
 2025-11-20 07:36:23,575 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 07:40:18,766 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 07:40:20,739 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 07:40:20,741 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 07:40:20,742 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 07:40:20,744 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 07:40:20,744 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 07:40:58,974 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+There are no critical OpenSSL CVEs (CVSS score >= 9.0) found in the last 5 years based on the available data.
+2025-11-20 07:40:58,976 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 07:43:40,189 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 07:43:42,032 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 07:43:42,032 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 07:43:42,033 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 07:43:42,034 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 07:43:42,034 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 07:44:33,763 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+I am sorry, but I am unable to retrieve CVE information at this time. The tool encountered an error when trying to access the CVE data. Please try again later or contact support if the issue persists.
+2025-11-20 07:44:33,764 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
