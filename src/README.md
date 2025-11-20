@@ -20,25 +20,31 @@ Make sure that you already have uv installed on your desktop, if not then here's
   cd <this-project>
   uv sync
 ```
-- make sure that you have cloned the MCP RDF Explorer repository, outside this multi-agents-cykg-rag repository/folder
-- add your .ttl (rdf schema) to $ ls mcp-rdf-explorer/src/mcp-rdf-explorer/
-- one level with the server.py code
-- setup the browser_mcp.json located in root of multi-agents-cykg-rag repository
-- which look like this (you can see more specific explanation of this step in MCP-RDF-Explorer repo [MCP RDF Explorer](https://github.com/emekaokoye/mcp-rdf-explorer)) :
-```json
+- The SEPSES KG MCP server is bundled inside this repository (`src/mcp-cskg-rdf`).  
+  Update `browser_mcp.json` to point to the helper runner:
+  ```json
   {
-  "mcpServers": {
-    "rdf_explorer": {
-      "command": "D:\\Project\\github\\mcp-rdf-explorer\\venv\\Scripts\\python.exe",
-      "args": ["D:\\Project\\github\\mcp-rdf-explorer\\src\\mcp-rdf-explorer\\server.py", "--triple-file", "statements.ttl"]
+    "mcpServers": {
+      "sepses_kg": {
+        "command": "uv",
+        "args": [
+          "run",
+          "python",
+          "-m",
+          "scripts.run_sepses_mcp",
+          "--sparql-endpoint",
+          "https://w3id.org/sepses/sparql"
+        ]
+      }
     }
   }
-}
-```
+  ```
+  This launches FastMCP with the public SEPSES SPARQL endpoint, which is the same knowledge graph described in [978-3-030-30796-7_13](../docs/978-3-030-30796-7_13.md).  
+  If you prefer to work offline, download one of the RDF dumps from <https://w3id.org/sepses/dumps/> and add `--rdf-file <path-to-your.ttl>` to the args list.
 
 Make sure again that the .env file is filled !!!
 ```bash
-OPENAI_API_KEY=
+GOOGLE_API_KEY=
 LANGCHAIN_API_KEY=
 LANGCHAIN_TRACING_V2=
 LANGCHAIN_ENDPOINT=
@@ -52,6 +58,11 @@ NEO4J_AURA=
 NEO4J_AURA_USERNAME=
 NEO4J_AURA_PASSWORD=
 NEO4J_AURA_DATABASE=
+```
+
+Populate Neo4j with the sample CVE dataset (creates `vector`, `keyword`, and `entities` indexes automatically):
+```bash
+  uv run python -m scripts.ingest_cve_dataset --csv data/cve_dataset.csv
 ```
 
 Setup is completed, now you can run the program!!!
@@ -109,4 +120,3 @@ no-log-multi-agents-cykg-rag/
 
 
 ```
-

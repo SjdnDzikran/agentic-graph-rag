@@ -1,7 +1,7 @@
 # src/agents/cypher_agent.py
 from langchain_core.prompts import PromptTemplate
 from langchain_neo4j.chains.graph_qa.cypher import GraphCypherQAChain
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from src.config.settings import graph
 
 # --- Cypher Generation Prompt Template ---
@@ -89,6 +89,12 @@ qa_generation_prompt = PromptTemplate(
 )
 
 # --- Cypher QA Chain and Query Function ---
+gemini_kwargs = {
+    "model": "gemini-2.5-flash",
+    "temperature": 0,
+    "convert_system_message_to_human": True,
+}
+
 cypher_qa_chain = GraphCypherQAChain.from_llm(
     top_k=10,
     graph=graph,
@@ -97,8 +103,8 @@ cypher_qa_chain = GraphCypherQAChain.from_llm(
     return_intermediate_steps=True,
     cypher_prompt=cyper_generation_prompt,
     qa_prompt=qa_generation_prompt,
-    qa_llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=0),
-    cypher_llm=ChatOpenAI(model="gpt-4o", temperature=0),
+    qa_llm=ChatGoogleGenerativeAI(**gemini_kwargs),
+    cypher_llm=ChatGoogleGenerativeAI(**gemini_kwargs),
     allow_dangerous_requests=True,
     use_function_response=True
 )
