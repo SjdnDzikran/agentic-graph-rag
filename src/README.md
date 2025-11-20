@@ -281,6 +281,97 @@ uv sync --reinstall
 - Review the [query examples](../query-examples.md) for working SPARQL patterns
 - Ensure all prerequisites are properly installed and configured
 
+## Understanding SPARQL Namespaces and Schema Discovery
+
+### How We Determined the Correct Namespaces
+
+When working with external SPARQL endpoints like SEPSES, discovering the correct namespaces and properties requires systematic exploration:
+
+#### 1. **Official Documentation**
+The SEPSES project provides documentation about their ontology:
+- Research Paper: *"SEPSES: A Framework for Semantic Preserving Data Enrichment"* (See `docs/978-3-030-30796-7_13.md`)
+- Project Website: https://w3id.org/sepses/
+- Vocabulary Documentation: https://w3id.org/sepses/vocab/
+
+#### 2. **SPARQL Endpoint Introspection**
+You can query the endpoint to discover its schema:
+
+```sparql
+# Discover all classes (entity types)
+SELECT DISTINCT ?class (COUNT(?instance) AS ?count)
+WHERE {
+  ?instance a ?class .
+}
+GROUP BY ?class
+ORDER BY DESC(?count)
+```
+
+```sparql
+# Explore properties of a specific class (e.g., CVE)
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+SELECT DISTINCT ?property (COUNT(?value) AS ?count)
+WHERE {
+  ?cve a cve:CVE .
+  ?cve ?property ?value .
+}
+GROUP BY ?property
+ORDER BY DESC(?count)
+```
+
+```sparql
+# Find all namespaces used in the dataset
+SELECT DISTINCT ?namespace
+WHERE {
+  ?s ?p ?o .
+  BIND(REPLACE(STR(?s), "(.*[/#])[^/#]*$", "$1") AS ?namespace)
+}
+LIMIT 100
+```
+
+#### 3. **Standard Ontology Patterns**
+Semantic Web follows conventions:
+- **Dublin Core Terms** (`dcterms:`): Standard metadata (description, issued, modified, identifier)
+- **FOAF** (`foaf:`): People and organizations
+- **SKOS** (`skos:`): Taxonomies and controlled vocabularies
+- **RDF/RDFS** (`rdf:`, `rdfs:`): Core RDF concepts (type, label, comment)
+
+#### 4. **Trial and Error with Validation**
+Test queries with educated guesses based on domain knowledge:
+```sparql
+# Wrong property name
+?cve cve:cveId ?id .           # ❌ Returns no results
+
+# Correct property name  
+?cve cve:id ?id .              # ✅ Returns results
+```
+
+#### 5. **Working Examples as Schema Reference**
+The [query-examples.md](../query-examples.md) file contains verified queries that serve as a "schema by example". These were validated against the live endpoint and document the correct property mappings.
+
+### Key SEPSES Namespace Patterns
+
+All SEPSES vocabularies include `/ref/` in their URI path:
+```
+✅ Correct: http://w3id.org/sepses/vocab/ref/cve#
+❌ Wrong:   http://w3id.org/sepses/vocab/cve#
+```
+
+**Critical Property Mappings:**
+- CVE ID: `cve:id` (not `cve:cveId`)
+- Description: `dcterms:description` (not `cve:description`)
+- Published Date: `dcterms:issued` (not `dcterms:created`)
+- CVSS Score: `cvss:baseScore` (accessed via `cve:hasCVSS3BaseMetric`)
+
+### Why This Matters
+
+Understanding namespace discovery is crucial because:
+1. **No Universal Standard**: Different RDF datasets use different vocabularies
+2. **Documentation Gaps**: Not all endpoints have complete documentation
+3. **Query Accuracy**: Wrong namespaces = empty results or errors
+4. **Debugging**: Knowing how to explore helps troubleshoot issues
+
+For this project, we documented all working namespaces in the MCP server (`src/mcp-cskg-rdf/src/mcp-cskg-rdf/server.py`) as a resource that the AI agent can reference when generating queries.
+
 
 ## Features
 
