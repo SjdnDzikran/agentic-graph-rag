@@ -15,10 +15,14 @@ def get_mcp_client():
     """Inisialisasi dan mengembalikan MCPClient (hanya sekali)."""
     global _mcp_client
     if _mcp_client is None:
-        project_root = Path(__file__).parent.parent.parent
-        config_path = project_root / "browser_mcp.json"
-        if not config_path.exists():
-            raise FileNotFoundError(f"MCP config file not found at {config_path}")
+        config_path = None
+        for parent in Path(__file__).resolve().parents:
+            candidate = parent / "browser_mcp.json"
+            if candidate.exists():
+                config_path = candidate
+                break
+        if config_path is None:
+            raise FileNotFoundError("MCP config file not found in current or parent directories.")
         os.environ["MCP_USE_ANONYMIZED_TELEMETRY"] = "false"
         _mcp_client = MCPClient.from_config_file(str(config_path))
     return _mcp_client
