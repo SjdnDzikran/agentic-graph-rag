@@ -4,6 +4,68 @@
 AgCyRAG is a hybrid Agentic Retrieval-Augmented Generation (RAG) framework designed to improve cybersecurity analysis by integrating Knowledge Graph (KG) reasoning with vector-based retrieval.
 It enables factual grounding of Large Language Model (LLM)-powered analyses while handling heterogeneous structured and unstructured data (e.g., security log sources).
 
+## Architecture Overview
+
+AgCyRAG uses a multi-agent architecture orchestrated by LangGraph, combining local and remote knowledge sources to provide comprehensive cybersecurity analysis.
+
+### Agent Workflow
+
+```
+User Query
+    ↓
+[Guardrails & Router] ← Validates & routes questions
+    ↓
+    ├─→ [Vector Agent] ──────→ Neo4j (Semantic Search)
+    ├─→ [Cypher Agent] ──────→ Neo4j (Graph Traversal)
+    └─→ [MCP RDF Agent] ─────→ SEPSES SPARQL Endpoint
+         ↓
+    [Reflection Agent] ← Reviews if results are sufficient
+         ↓
+    [Synthesizer Agent] ← Combines all results into final answer
+         ↓
+    Final Answer
+```
+
+### Data Sources
+
+The system queries **two independent knowledge graphs**:
+
+#### 1. **Local Neo4j Database** (Your Machine)
+- **Contains**: MITRE ATT&CK framework data, custom CVE datasets
+- **Query Methods**: 
+  - **Vector Search**: Semantic similarity using embeddings
+  - **Cypher Queries**: Graph traversal for relationships
+- **Connection**: Direct connection via Python `neo4j` driver
+- **Data**: Loaded locally via `ingest_cve_dataset.py` script
+
+#### 2. **Remote SEPSES SPARQL Endpoint** (TU Wien)
+- **Endpoint**: `https://w3id.org/sepses/sparql`
+- **Contains**: 
+  - CVE (Common Vulnerabilities and Exposures)
+  - CWE (Common Weakness Enumeration)
+  - CAPEC (Common Attack Pattern Enumeration)
+  - CPE (Common Platform Enumeration)
+  - CVSS Scoring Metrics (v2 and v3)
+- **Query Method**: SPARQL queries sent over HTTP
+- **Connection**: Via MCP (Model Context Protocol) server
+- **Data**: Live queries to remote RDF triplestore (no local download)
+- **Maintained by**: SEPSES Project at Technical University of Vienna
+
+### How It Works
+
+1. **Question Processing**: The Guardrails agent validates the question and the Router determines which agents to invoke
+2. **Parallel Querying**: Agents query their respective data sources simultaneously:
+   - **Vector/Cypher Agents** → Query local Neo4j database
+   - **MCP RDF Agent** → Sends SPARQL queries to remote SEPSES endpoint
+3. **Reflection Loop**: If results are insufficient, agents iterate with refined queries
+4. **Synthesis**: The Synthesizer combines all results into a coherent answer with source attribution
+
+### Agent Communication
+
+- **State Management**: All agents share a `GraphState` object that flows through the workflow
+- **Orchestration**: LangGraph manages execution order using nodes, edges, and conditional routing
+- **No Direct Agent-to-Agent Calls**: Communication happens through the shared state machine
+
 ## Core Components
 
 - **Multi-Agent System (LangGraph)**: The primary application logic that orchestrates the entire workflow. It includes specialized agents for validating questions, querying databases, reflecting on results, and synthesizing final answers.
