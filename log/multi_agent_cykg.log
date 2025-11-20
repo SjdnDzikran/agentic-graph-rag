@@ -1,0 +1,133 @@
+2025-11-20 02:26:16,459 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 02:26:18,650 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 02:26:18,651 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 02:26:18,652 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 02:26:18,654 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 02:26:18,654 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'How do I remediate credential stuffing?'
+2025-11-20 02:26:18,655 - src.agents.mcp_rdf_agent - ERROR - An error occurred while running the MCP Agent: MCP config file not found at /home/dzikran/UGM/semantic-web/agentic-graph-rag/src/browser_mcp.json
+2025-11-20 02:26:18,655 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+Error during MCP agent execution: MCP config file not found at /home/dzikran/UGM/semantic-web/agentic-graph-rag/src/browser_mcp.json
+2025-11-20 02:26:18,656 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 07:34:09,185 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 07:34:11,236 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 07:34:11,236 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 07:34:11,237 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 07:34:11,238 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 07:34:11,238 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 07:34:11,238 - src.agents.mcp_rdf_agent - ERROR - An error occurred while running the MCP Agent: MCP config file not found at /home/dzikran/UGM/semantic-web/agentic-graph-rag/src/browser_mcp.json
+2025-11-20 07:34:11,238 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+Error during MCP agent execution: MCP config file not found at /home/dzikran/UGM/semantic-web/agentic-graph-rag/src/browser_mcp.json
+2025-11-20 07:34:11,238 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 07:35:51,824 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 07:35:53,701 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 07:35:53,701 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 07:35:53,702 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 07:35:53,703 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 07:35:53,703 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 07:36:23,573 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+There are no critical OpenSSL CVEs (CVSS score >= 9.0) from the last 5 years in the knowledge base. I will now search for high severity OpenSSL CVEs (CVSS score >= 7.0) from the last 5 years.
+2025-11-20 07:36:23,575 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 07:40:18,766 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 07:40:20,739 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 07:40:20,741 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 07:40:20,742 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 07:40:20,744 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 07:40:20,744 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 07:40:58,974 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+There are no critical OpenSSL CVEs (CVSS score >= 9.0) found in the last 5 years based on the available data.
+2025-11-20 07:40:58,976 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 07:43:40,189 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 07:43:42,032 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 07:43:42,032 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 07:43:42,033 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 07:43:42,034 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 07:43:42,034 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 07:44:33,763 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+I am sorry, but I am unable to retrieve CVE information at this time. The tool encountered an error when trying to access the CVE data. Please try again later or contact support if the issue persists.
+2025-11-20 07:44:33,764 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 07:52:49,164 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 07:52:51,018 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 07:52:51,018 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 07:52:51,020 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 07:52:51,021 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 07:52:51,021 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 07:53:30,292 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+There are no critical or high-severity OpenSSL CVEs (CVSS score >= 7.0) from the last 5 years in the knowledge base.
+2025-11-20 07:53:30,293 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 07:57:13,862 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 07:57:15,731 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 07:57:15,732 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 07:57:15,732 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 07:57:15,734 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 07:57:15,734 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 07:57:34,379 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+I am unable to rank critical OpenSSL CVEs from the last 5 years. I can retrieve critical CVEs, but I cannot filter them by specific software like OpenSSL, nor can I combine a time-based filter with a criticality filter for a specific software.
+2025-11-20 07:57:34,381 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 08:00:33,722 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 08:00:35,358 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 08:00:35,358 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 08:00:35,359 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 08:00:35,361 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 08:00:35,361 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 08:01:04,347 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+I couldn't find any critical OpenSSL CVEs from the last 5 years based on your criteria.
+2025-11-20 08:01:04,348 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 08:04:36,596 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 08:04:38,471 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 08:04:38,471 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 08:04:38,472 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 08:04:38,473 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 08:04:38,473 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 08:04:54,203 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+I couldn't find any critical CVEs related to OpenSSL in the last 5 years using the available tools.
+2025-11-20 08:04:54,205 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 08:09:45,787 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 08:09:48,808 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 08:09:48,808 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 08:09:48,809 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 08:09:48,811 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 08:09:48,812 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Show me vulnerabilities in Windows products'
+2025-11-20 08:10:06,224 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+Here are some vulnerabilities found in Windows products:
+
+*   **CVE-2017-10202**: Vulnerability in the OJVM component of Oracle Database Server. On Windows platforms, this has a CVSS 3.0 Base Score of 9.9 (Confidentiality, Integrity and Availability impacts).
+*   **CVE-2019-1384**: A security feature bypass vulnerability exists where a NETLOGON message is able to obtain the session key and sign messages, aka 'Microsoft Windows Security Feature Bypass Vulnerability'. (Score: 9.9)
+*   **CVE-2020-1112**: An elevation of privilege vulnerability exists when the Windows Background Intelligent Transfer Service (BITS) IIS module improperly handles uploaded content, aka 'Windows Background Intelligent Transfer Service Elevation of Privilege Vulnerability'. (Score: 9.9)
+*   **CVE-2020-26085, CVE-2020-27127, CVE-2020-27132, CVE-2020-27133, CVE-2020-27134**: Multiple vulnerabilities in Cisco Jabber for Windows, Jabber for MacOS, and Jabber for mobile platforms could allow an attacker to execute arbitrary programs on the underlying operating system (OS) with elevated privileges or gain access to sensitive information. (Score: 9.9 for all)
+*   **CVE-2021-1411**: Multiple vulnerabilities in Cisco Jabber for Windows, Cisco Jabber for MacOS, and Cisco Jabber for mobile platforms could allow an attacker to execute arbitrary programs on the underlying operating system with elevated privileges, access sensitive information, intercept protected network traffic, or cause a denial of service (DoS) condition. (Score: 9.9)
+*   **CVE-2021-26867**: Windows Hyper-V Remote Code Execution Vulnerability. (Score: 9.9)
+*   **CVE-1999-1324**: VAXstations running Open VMS 5.3 through 5.5-2 with VMS DECwindows or MOTIF do not properly disable access to user accounts that exceed the break-in limit threshold for failed login attempts, which makes it easier for attackers to conduct brute force password guessing. (Score: 9.8)
+*   **CVE-2000-1218**: The default configuration for the domain name resolver for Microsoft Windows 98, NT 4.0, 2000, and XP sets the QueryIpMatching parameter to 0, which causes Windows to accept DNS updates from hosts that it did not query, which allows remote attackers to poison the DNS cache. (Score: 9.8)
+*   **CVE-2003-1233**: Pedestal Software Integrity Protection Driver (IPD) 1.3 and earlier allows privileged attackers, such as rootkits, to bypass file access restrictions to the Windows kernel by using the NtCreateSymbolicLinkObject function to create a symbolic link to (1) \\Device\\PhysicalMemory or (2) to a drive letter using the subst command. (Score: 9.8)
+*   **CVE-2015-3442**: Soreco Xpert.Line 3.0 allows local users to spoof users and consequently gain privileges by intercepting a Windows API call. (Score: 9.8)
+*   **CVE-2015-4642**: The escapeshellarg function in ext/standard/exec.c in PHP before 5.4.42, 5.5.x before 5.5.26, and 5.6.x before 5.6.10 on Windows allows remote attackers to execute arbitrary OS commands via a crafted string to an application that accepts command-line arguments for a call to the PHP system function. (Score: 9.8)
+*   **CVE-2015-9264**: Lansweeper 4.x through 6.x before 6.0.0.48 allows attackers to execute arbitrary code on the administrator's workstation via a crafted Windows service. (Score: 9.8)
+*   **CVE-2016-0933, CVE-2016-0940, CVE-2016-0942, CVE-2016-0944, CVE-2016-0945, CVE-2016-0946, CVE-2016-1007, CVE-2016-1009, CVE-2016-1037, CVE-2016-1039, CVE-2016-1040, CVE-2016-1042, CVE-2016-1043, CVE-2016-1045, CVE-2016-1046, CVE-2016-1047, CVE-2016-1048, CVE-2016-1049, CVE-2016-1050, CVE-2016-1051, CVE-2016-1052, CVE-2016-1053, CVE-2016-1054, CVE-2016-1055, CVE-2016-1056, CVE-2016-1057, CVE-2016-1058, CVE-2016-1059, CVE-2016-1060, CVE-2016-1061**: Various vulnerabilities in Adobe Reader and Acrobat on Windows and OS X allowing arbitrary code execution, denial of service, or JavaScript API execution bypass. (Score: 9.8 for all)
+
+Please note that some CVEs were rejected or withdrawn as they were not considered security issues or were related to configurations rather than direct vulnerabilities.
+2025-11-20 08:10:06,226 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 09:28:53,486 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 09:28:55,019 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 09:28:55,019 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 09:28:55,021 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 09:28:55,023 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 09:28:55,023 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Show me vulnerabilities in Windows products'
+2025-11-20 09:29:13,070 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+Here are some vulnerabilities found in Windows products:
+
+*   **CVE-2017-10202**: Vulnerability in the OJVM component of Oracle Database Server. On Windows platforms, this has a CVSS 3.0 Base Score of 9.9 (Confidentiality, Integrity and Availability impacts).
+*   **CVE-2019-1384**: A security feature bypass vulnerability exists where a NETLOGON message is able to obtain the session key and sign messages, aka 'Microsoft Windows Security Feature Bypass Vulnerability'. (Score: 9.9)
+*   **CVE-2020-1112**: An elevation of privilege vulnerability exists when the Windows Background Intelligent Transfer Service (BITS) IIS module improperly handles uploaded content, aka 'Windows Background Intelligent Transfer Service Elevation of Privilege Vulnerability'. (Score: 9.9)
+*   **CVE-2020-26085, CVE-2020-27127, CVE-2020-27132, CVE-2020-27133, CVE-2020-27134**: Multiple vulnerabilities in Cisco Jabber for Windows, Jabber for MacOS, and Jabber for mobile platforms could allow an attacker to execute arbitrary programs on the underlying operating system (OS) with elevated privileges or gain access to sensitive information. (Score: 9.9 for all)
+*   **CVE-2021-1411**: Multiple vulnerabilities in Cisco Jabber for Windows, Cisco Jabber for MacOS, and Cisco Jabber for mobile platforms could allow an attacker to execute arbitrary programs on the underlying operating system with elevated privileges, access sensitive information, intercept protected network traffic, or cause a denial of service (DoS) condition. (Score: 9.9)
+*   **CVE-2021-26867**: Windows Hyper-V Remote Code Execution Vulnerability. (Score: 9.9)
+*   **CVE-1999-1324**: VAXstations running Open VMS 5.3 through 5.5-2 with VMS DECwindows or MOTIF do not properly disable access to user accounts that exceed the break-in limit threshold for failed login attempts, which makes it easier for attackers to conduct brute force password guessing. (Score: 9.8)
+*   **CVE-2000-1218**: The default configuration for the domain name resolver for Microsoft Windows 98, NT 4.0, 2000, and XP sets the QueryIpMatching parameter to 0, which causes Windows to accept DNS updates from hosts that it did not query, which allows remote attackers to poison the DNS cache. (Score: 9.8)
+*   **CVE-2003-1233**: Pedestal Software Integrity Protection Driver (IPD) 1.3 and earlier allows privileged attackers, such as rootkits, to bypass file access restrictions to the Windows kernel by using the NtCreateSymbolicLinkObject function to create a symbolic link to (1) \\Device\\PhysicalMemory or (2) to a drive letter using the subst command. (Score: 9.8)
+*   **CVE-2015-3442**: Soreco Xpert.Line 3.0 allows local users to spoof users and consequently gain privileges by intercepting a Windows API call. (Score: 9.8)
+*   **CVE-2015-4642**: The escapeshellarg function in ext/standard/exec.c in PHP before 5.4.42, 5.5.x before 5.5.26, and 5.6.x before 5.6.10 on Windows allows remote attackers to execute arbitrary OS commands via a crafted string to an application that accepts command-line arguments for a call to the PHP system function. (Score: 9.8)
+*   **CVE-2015-9264**: Lansweeper 4.x through 6.x before 6.0.0.48 allows attackers to execute arbitrary code on the administrator's workstation via a crafted Windows service. (Score: 9.8)
+*   **CVE-2016-0933, CVE-2016-0940, CVE-2016-0942, CVE-2016-0944, CVE-2016-0945, CVE-2016-0946, CVE-2016-1007, CVE-2016-1009, CVE-2016-1037, CVE-2016-1039, CVE-2016-1040, CVE-2016-1042, CVE-2016-1043, CVE-2016-1045, CVE-2016-1046, CVE-2016-1047, CVE-2016-1048, CVE-2016-1049, CVE-2016-1050, CVE-2016-1051, CVE-2016-1052, CVE-2016-1053, CVE-2016-1054, CVE-2016-1055, CVE-2016-1056, CVE-2016-1057, CVE-2016-1058, CVE-2016-1059, CVE-2016-1060, CVE-2016-1061**: Various vulnerabilities in Adobe Reader and Acrobat on Windows and OS X allowing arbitrary code execution, denial of service, or JavaScript API execution bypass. (Score: 9.8 for all)
+
+Please note that some CVEs were rejected or withdrawn as they were not considered security issues or were related to configurations rather than direct vulnerabilities.
+2025-11-20 09:29:13,073 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
