@@ -77,6 +77,7 @@ async def attack_triplestore_lifespan(server: FastMCP, rdf_file: str, sparql_end
     
     metrics = {"queries": 0, "total_time": 0.0}
     max_tokens = 10000
+    active_endpoint = sparql_endpoint if sparql_endpoint else None
     
     if sparql_endpoint and HAS_SPARQLSTORE:
         logger.info(f"Connecting to SPARQL endpoint: {sparql_endpoint}")
@@ -109,7 +110,8 @@ async def attack_triplestore_lifespan(server: FastMCP, rdf_file: str, sparql_end
             "max_tokens": max_tokens,
             "rdf_file": rdf_file,
             "sparql_endpoint": sparql_endpoint,
-            "is_sparql_endpoint": bool(sparql_endpoint and HAS_SPARQLSTORE)
+            "is_sparql_endpoint": bool(sparql_endpoint and HAS_SPARQLSTORE),
+            "active_external_endpoint": active_endpoint
         }
     finally:
         logger.info("Shutting down MITRE ATT&CK triplestore connection")
@@ -1251,7 +1253,7 @@ def get_references_for_cve(cve_id: str, ctx: Context, include_description: bool 
 #################################################################
 
 @mcp.tool()
-def get_recent_cves(days: int = 30, include_description: bool = False) -> str:
+def get_recent_cves(days: int = 30, ctx: Context = None, include_description: bool = False) -> str:
     """Get CVEs published in the last N days.
     
     Args:
@@ -1285,7 +1287,7 @@ def get_recent_cves(days: int = 30, include_description: bool = False) -> str:
     LIMIT 100
     """
     
-    return execute_sparql_query(query, include_description)
+    return execute_sparql_query(query, ctx, include_description)
 
 @mcp.tool()
 def get_cves_by_year(year: int, ctx: Context, include_description: bool = False) -> str:
@@ -1335,53 +1337,45 @@ if __name__ == "__main__":
     logger.info("mcp.run() completed")
 
 @mcp.prompt()
-def text_to_sparql(prompt: str, ctx: Context) -> str:
-    """Convert a text prompt to a SPARQL query and execute it, with token limit checks.
+def text_to_sparql(prompt: str, ctx: Context, include_description: bool = False) -> str:
+    """Execute an arbitrary SPARQL query supplied in the prompt text.
 
-    Args:
-        prompt (str): The text prompt to convert to SPARQL.
-        ctx (Context): The FastMCP context object.
-
-    Returns:
-        str: Query results with usage stats, or an error message if execution fails or token limits are exceeded.
+    The MCP agent should pass the full SPARQL statement (SELECT/ASK/CONSTRUCT/DESCRIBE).
+    This helper enforces the configured token budget and runs the query against
+    whichever data source (local file or SEPSES endpoint) is active.
     """
+    sanitized = prompt.strip()
+    if not sanitized:
+        return "Error: Empty prompt. Provide a full SPARQL query."
+
+    upper_prompt = sanitized.lstrip().upper()
+    if not upper_prompt.startswith(("SELECT", "ASK", "CONSTRUCT", "DESCRIBE")):
+        return (
+            "Error: text_to_sparql expects a complete SPARQL query beginning with "
+            "SELECT/ASK/CONSTRUCT/DESCRIBE. Provide the query you want to execute."
+        )
+
     encoder = tiktoken.get_encoding("gpt2")
-    start_time = time.time()
-    grok_response = {"endpoint": None, "query": "SELECT ?s WHERE { ?s ?p ?o } LIMIT 1"}  # Placeholder
-    endpoint = grok_response.get("endpoint")
-    query = grok_response["query"]
-    logger.debug(f"Prompt received: {prompt}")
-    input_tokens = len(encoder.encode(prompt + query))
-    max_tokens = ctx.request_context.lifespan_context["max_tokens"]
+    max_tokens = ctx.request_context.lifespan_context.get("max_tokens", 10000)
+    input_tokens = len(encoder.encode(sanitized))
     if input_tokens > max_tokens:
-        logger.debug(f"Token limit exceeded: {input_tokens} > {max_tokens}")
-        return f"Error: Input exceeds token limit ({input_tokens} tokens > {max_tokens}). Shorten your prompt or increase MAX_TOKENS with 'set_max_tokens'."
-    active_endpoint = ctx.request_context.lifespan_context["active_external_endpoint"]
-    use_local = active_endpoint is None and endpoint is None
-    use_configured = active_endpoint and (endpoint is None or endpoint == active_endpoint)
-    use_extracted = endpoint and endpoint != active_endpoint
-    logger.debug(f"Execution context - Local: {use_local}, Configured: {use_configured}, Extracted: {use_extracted}")
+        return (
+            f"Error: Input exceeds token limit ({input_tokens} tokens > {max_tokens}). "
+            "Shorten your query or increase MAX_TOKENS with 'set_max_tokens'."
+        )
+
+    start_time = time.time()
     try:
-        if use_extracted:
-            results = ctx.request_context.call_tool("execute_on_endpoint", {"endpoint": endpoint, "query": query})
-            logger.debug(f"Executed on extracted endpoint {endpoint}")
-        elif use_local:
-            results = ctx.request_context.call_tool("sparql_query", {"query": query, "use_service": False})
-            logger.debug("Executed on local graph")
-        elif use_configured:
-            results = ctx.request_context.call_tool("sparql_query", {"query": query})
-            logger.debug(f"Executed on configured endpoint {active_endpoint}")
-        else:
-            logger.debug("No valid execution context")
-            return "Unable to determine execution context for the query."
-        output_tokens = len(encoder.encode(results))
-        total_tokens = input_tokens + output_tokens
-        exec_time = time.time() - start_time
-        usage_stats = f"[Resource Usage: Input Tokens: {input_tokens}, Output Tokens: {output_tokens}, Total: {total_tokens}, Time: {exec_time:.2f}s]"
-        logger.debug(f"Usage stats generated: {usage_stats}")
-        return f"{results}\n\n{usage_stats}"
-    except Exception as e:
-        logger.error(f"Query execution error: {str(e)}")
-        if "interrupted" in str(e).lower():
-            return f"Error: Response interrupted, likely due to token limit (Input: {input_tokens} tokens, Max: {max_tokens}). Shorten input or increase MAX_TOKENS."
-        return f"Error executing query: {str(e)}"
+        results = execute_sparql_query(sanitized, ctx, include_description)
+    except Exception as exc:
+        logger.error(f"Failed to run custom SPARQL query: {exc}")
+        return f"Error executing SPARQL query: {exc}"
+
+    output_tokens = len(encoder.encode(results))
+    total_tokens = input_tokens + output_tokens
+    exec_time = time.time() - start_time
+    usage_stats = (
+        f"[Resource Usage: Input Tokens: {input_tokens}, "
+        f"Output Tokens: {output_tokens}, Total: {total_tokens}, Time: {exec_time:.2f}s]"
+    )
+    return f"{results}\n\n{usage_stats}"

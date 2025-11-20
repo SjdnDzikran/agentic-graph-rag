@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "sepses_kg": {
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "scripts.run_sepses_mcp",
+        "--sparql-endpoint",
+        "https://w3id.org/sepses/sparql"
+      ]
+    }
+  }
+}

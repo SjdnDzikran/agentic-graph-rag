@@ -1,0 +1,10 @@
+2025-11-20 02:26:16,459 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 02:26:18,650 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 02:26:18,651 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 02:26:18,652 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 02:26:18,654 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 02:26:18,654 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'How do I remediate credential stuffing?'
+2025-11-20 02:26:18,655 - src.agents.mcp_rdf_agent - ERROR - An error occurred while running the MCP Agent: MCP config file not found at /home/dzikran/UGM/semantic-web/agentic-graph-rag/src/browser_mcp.json
+2025-11-20 02:26:18,655 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+Error during MCP agent execution: MCP config file not found at /home/dzikran/UGM/semantic-web/agentic-graph-rag/src/browser_mcp.json
+2025-11-20 02:26:18,656 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
