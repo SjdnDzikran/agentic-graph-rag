@@ -2,73 +2,222 @@
 # AgCyRAG: an Agentic Knowledge Graph based RAG Framework for Automated Security Analysis
 
 AgCyRAG is a hybrid Agentic Retrieval-Augmented Generation (RAG) framework designed to improve cybersecurity analysis by integrating Knowledge Graph (KG) reasoning with vector-based retrieval.
-It enables factual grounding of Large Language Model (LLM)-powered analyses while handling heterogeneous structured and unstructured data (e.g., security log sources)
+It enables factual grounding of Large Language Model (LLM)-powered analyses while handling heterogeneous structured and unstructured data (e.g., security log sources).
+
 ## Core Components
 
-- Multi-Agent System (LangGraph): The primary application logic that orchestrates the entire workflow. It includes specialized agents for validating questions, querying databases, reflecting on results, and synthesizing final answers
-- Neo4j Knowledge Graph: A graph database storing structured cybersecurity data (e.g., from the MITRE ATT&CK framework), which is queried using the Cypher language.
-- MCP RDF Explorer: Model Context Protocol (MCP) server that provides a conversational interface for RDF-based Knowledge Graph (Turtle) exploration and analysis in local file mode or SPARQL endpoint mode. (https://github.com/emekaokoye/mcp-rdf-explorer)
+- **Multi-Agent System (LangGraph)**: The primary application logic that orchestrates the entire workflow. It includes specialized agents for validating questions, querying databases, reflecting on results, and synthesizing final answers.
+- **Neo4j Knowledge Graph**: A graph database storing structured cybersecurity data (e.g., from the MITRE ATT&CK framework), which is queried using the Cypher language.
+- **MCP RDF Explorer**: Model Context Protocol (MCP) server that provides a conversational interface for RDF-based Knowledge Graph exploration using the SEPSES Cybersecurity Knowledge Graph via SPARQL endpoint. (Based on https://github.com/emekaokoye/mcp-rdf-explorer)
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+1. **Python 3.10+**: Required for running the application
+2. **uv**: Fast Python package installer and resolver
+   - Installation guide: https://docs.astral.sh/uv/getting-started/installation/
+   - Quick install: `curl -LsSf https://astral.sh/uv/install.sh | sh` (Linux/macOS) or `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"` (Windows)
+3. **Neo4j Database**: Either local instance or Neo4j Aura cloud
+   - Local: Download from https://neo4j.com/download/
+   - Cloud: Sign up at https://neo4j.com/cloud/aura/ (free tier available)
+4. **API Keys**:
+   - **Google Gemini API**: For LLM capabilities (https://makersuite.google.com/app/apikey)
+   - **LangChain API** (optional): For tracing and monitoring (https://smith.langchain.com/)
 
 ## Setup and Installation
 
-How to use
-
-Make sure that you already have uv installed on your desktop, if not then here's the installation guide : https://docs.astral.sh/uv/getting-started/installation/ 
+### 1. Clone the Repository
 
 ```bash
-  git clone <this-project>
-  cd <this-project>
-  uv sync
+git clone <this-repository-url>
+cd agentic-graph-rag
 ```
-- The SEPSES KG MCP server is bundled inside this repository (`src/mcp-cskg-rdf`).  
-  Update `browser_mcp.json` to point to the helper runner:
-  ```json
-  {
-    "mcpServers": {
-      "sepses_kg": {
-        "command": "uv",
-        "args": [
-          "run",
-          "python",
-          "-m",
-          "scripts.run_sepses_mcp",
-          "--sparql-endpoint",
-          "https://w3id.org/sepses/sparql"
-        ]
-      }
+
+### 2. Install Dependencies
+
+```bash
+uv sync
+```
+
+This will create a virtual environment and install all required dependencies.
+
+### 3. Configure Neo4j
+
+**Option A: Local Neo4j**
+1. Install and start Neo4j Desktop or Community Edition
+2. Create a new database
+3. Note your connection details (default: `bolt://localhost:7687`, username: `neo4j`)
+
+**Option B: Neo4j Aura (Cloud)**
+1. Create a free account at https://neo4j.com/cloud/aura/
+2. Create a new instance
+3. Save your connection URI, username, and password
+
+### 4. Configure Environment Variables
+
+Create a `.env` file in the project root directory:
+
+```bash
+# Required: Google Gemini API Key
+GOOGLE_API_KEY=your_google_api_key_here
+
+# Optional: LangChain Tracing (for debugging)
+LANGCHAIN_API_KEY=your_langchain_api_key_here
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
+LANGCHAIN_PROJECT=agentic-graph-rag
+
+# Neo4j Local Database (if using local Neo4j)
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD_ICS=your_neo4j_password_here
+NEO4J_DATABASE=neo4j
+
+# Neo4j Aura Cloud (if using Neo4j Aura instead)
+NEO4J_AURA=neo4j+s://your-instance-id.databases.neo4j.io
+NEO4J_AURA_USERNAME=neo4j
+NEO4J_AURA_PASSWORD=your_aura_password_here
+NEO4J_AURA_DATABASE=neo4j
+```
+
+**Important Notes:**
+- At minimum, you need `GOOGLE_API_KEY` and either the local Neo4j or Aura credentials
+- LangChain API is optional and only needed for tracing/debugging
+- The system will use local Neo4j by default; Aura credentials are used as fallback
+
+### 5. Configure SEPSES MCP Server
+
+The SEPSES Cybersecurity Knowledge Graph MCP server is bundled in this repository (`src/mcp-cskg-rdf`).
+
+Create a `browser_mcp.json` file in the project root:
+
+```json
+{
+  "mcpServers": {
+    "sepses_kg": {
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "scripts.run_sepses_mcp",
+        "--sparql-endpoint",
+        "https://w3id.org/sepses/sparql"
+      ]
     }
   }
-  ```
-  This launches FastMCP with the public SEPSES SPARQL endpoint, which is the same knowledge graph described in [978-3-030-30796-7_13](../docs/978-3-030-30796-7_13.md).  
-  If you prefer to work offline, download one of the RDF dumps from <https://w3id.org/sepses/dumps/> and add `--rdf-file <path-to-your.ttl>` to the args list.
-
-Make sure again that the .env file is filled !!!
-```bash
-GOOGLE_API_KEY=
-LANGCHAIN_API_KEY=
-LANGCHAIN_TRACING_V2=
-LANGCHAIN_ENDPOINT=
-LANGCHAIN_PROJECT=
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USERNAME=    
-NEO4J_PASSWORD_ICS=
-NEO4J_DATABASE=
-
-NEO4J_AURA=
-NEO4J_AURA_USERNAME=
-NEO4J_AURA_PASSWORD=
-NEO4J_AURA_DATABASE=
+}
 ```
 
-Populate Neo4j with the sample CVE dataset (creates `vector`, `keyword`, and `entities` indexes automatically):
+This configuration uses the public SEPSES SPARQL endpoint, which provides access to cybersecurity data including CVE, CWE, CAPEC, and CPE information.
+
+**Offline Mode (Optional):**
+If you prefer to work offline or want faster queries:
+1. Download an RDF dump from https://w3id.org/sepses/dumps/
+2. Update the `browser_mcp.json` to use the local file:
+   ```json
+   {
+     "mcpServers": {
+       "sepses_kg": {
+         "command": "uv",
+         "args": [
+           "run",
+           "python",
+           "-m",
+           "scripts.run_sepses_mcp",
+           "--rdf-file",
+           "path/to/your/sepses-dump.ttl"
+         ]
+       }
+     }
+   }
+   ```
+
+### 6. Populate Neo4j with Sample Data
+
+Load the CVE dataset into Neo4j (this creates vector, keyword, and entity indexes automatically):
+
 ```bash
-  uv run python -m scripts.ingest_cve_dataset --csv data/cve_dataset.csv
+cd src
+uv run python -m scripts.ingest_cve_dataset --csv ../data/cve_dataset.csv
 ```
 
-Setup is completed, now you can run the program!!!
+This step imports sample cybersecurity data that the system will query alongside the SEPSES knowledge graph.
+
+## Running the Application
+
+### Basic Usage
+
+From the `src` directory:
+
 ```bash
-  uv run -m src.run -- "Your question here"
+uv run -m src.run "Your cybersecurity question here"
 ```
+
+### Example Queries
+
+Try these example queries to test the system:
+
+**CVE Queries:**
+```bash
+# Find vulnerabilities in specific products
+uv run -m src.run "Show me CVEs affecting Apache products"
+uv run -m src.run "Find vulnerabilities in Windows products"
+
+# Search by severity
+uv run -m src.run "Show me high severity vulnerabilities with CVSS score above 7.0"
+uv run -m src.run "List recent CVEs with their descriptions"
+
+# Search by keyword
+uv run -m src.run "Find all CVEs mentioning OpenSSL"
+uv run -m src.run "What are the highest-rated CVEs related to buffer overflow?"
+```
+
+**MITRE ATT&CK Queries (from Neo4j):**
+```bash
+uv run -m src.run "What are the most common attack techniques?"
+uv run -m src.run "Show me attack patterns related to privilege escalation"
+```
+
+**Note:** The MCP server must be running for CVE/CWE/CAPEC queries. It starts automatically when you run a query.
+
+## Troubleshooting
+
+### Common Issues
+
+**1. "No module named 'xyz'" error**
+```bash
+# Reinstall dependencies
+uv sync --reinstall
+```
+
+**2. Neo4j connection errors**
+- Verify Neo4j is running: Check Neo4j Desktop or Aura console
+- Check credentials in `.env` file
+- For local Neo4j, ensure it's listening on `bolt://localhost:7687`
+- For Aura, use the full connection string starting with `neo4j+s://`
+
+**3. "GOOGLE_API_KEY not found" error**
+- Ensure your `.env` file is in the correct location (project root)
+- Get an API key from https://makersuite.google.com/app/apikey
+- Add it to `.env` as: `GOOGLE_API_KEY=your_key_here`
+
+**4. MCP server not starting**
+- The server starts automatically with the first query
+- Check `browser_mcp.json` is in the project root
+- Verify the SPARQL endpoint is accessible: https://w3id.org/sepses/sparql
+
+**5. Empty results for CVE queries**
+- The SEPSES endpoint may not have data matching very specific criteria
+- Try broader queries like "Show me high severity CVEs" instead of "Critical OpenSSL CVEs from last 5 years"
+- Check the CVSS threshold (9.0 is very high; try 7.0 for more results)
+
+### Getting Help
+
+- Check the logs in `src/log/` for detailed error messages
+- Review the [query examples](../query-examples.md) for working SPARQL patterns
+- Ensure all prerequisites are properly installed and configured
 
 
 ## Features
