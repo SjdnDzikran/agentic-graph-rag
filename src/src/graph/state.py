@@ -7,6 +7,9 @@ class AgentState(TypedDict):
     question: str
     original_question: str
     is_relevant: bool
+    # Tambahan: Menyimpan alasan penolakan atau penerimaan dari guardrails
+    guardrail_reason: Optional[str]
+    
     is_log_question: bool
     is_cskg_required: bool
     

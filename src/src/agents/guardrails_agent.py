@@ -1,4 +1,5 @@
-from typing import Literal
+# src/agents/guardrails_agent.py
+from typing import Literal, Optional
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from src.config.settings import llm
@@ -8,34 +9,39 @@ class GuardrailsRouterOutput(BaseModel):
     Combined output for guardrails checking and routing decisions
     """
     decision: Literal["relevant", "irrelevant"] = Field(
-        description="Checks if the question is relevant to cybersecurity topics including log analysis, threat detection, vulnerability assessment and attack pattern reconstruction."
+        description="Determine if the question falls within the scope of Vulnerability Assessment (Finding, Scoring, Prioritizing, Explaining)."
+    )
+    reason: str = Field(
+        description="Brief explanation of why the question is relevant or irrelevant."
     )
     datasource: Literal["log_analysis", "cyber_knowledge"] = Field(
-        description="Routes relevant questions to 'log_analysis' for log analysis and specific question related to log in the system or to 'cyber_knowledge' for general cybersecurity questions. Only populated if decision is 'relevant'."
+        description="Routes the question. 'log_analysis' for finding vulnerabilities in system logs/events. 'cyber_knowledge' for scoring, prioritizing, explaining CVEs/CWEs or general security concepts."
     )
 
 guardrails_router_prompt = ChatPromptTemplate.from_messages([
     (
         "system", 
         """
-        You are a gatekeeper and router for a Q&A system that queries a knowledge graph.
-        Your task is to:
-        1. Determine if a question is answerable by the graph (guardrails)
-        2. If relevant, route it to the appropriate tool
-        
-        The graph contains two types of information:
-            1. **Log Data:** Detailed records of system events, including specific users, servers, hosts, processes, and session activities (e.g., login successes or failures).
-            2. **Cybersecurity Knowledge:** knowledge base for threat intelligence, including CVE, CWE, CAPEC and MITRE ATT&CK.
+        You are the Main Guardrail Agent for a specialized **Vulnerability Assessment System**.
+        Your job is to strictly filter user queries and route them correctly.
 
-        **GUARDRAILS RULES:**
-        - A question is **relevant** if it asks about security log analysis such as finding suspicious activities in log or identify specific entities in logs such as users, hosts, ip-address, log events, OR general cybersecurity topics.
-        - A question is **irrelevant** if it is completely off-topic (e.g., 'what is the weather?', 'tell me a joke').
+        **ALLOWED SCOPE (Vulnerability Assessment):**
+        You should only allow questions related to:
+        1. **Finding/Detection**: Identifying vulnerabilities, bugs, flaws, or suspicious patterns in software/logs (e.g., "Find SQL injection attempts in the logs", "What CVEs affect version X?").
+        2. **Scoring**: Assessing severity, CVSS scores, or impact levels (e.g., "What is the CVSS score of CVE-2023-1234?", "Is this critical?").
+        3. **Prioritizing**: Determining which vulnerabilities to fix first based on risk (e.g., "Which patch should I apply first?").
+        4. **Explaining**: Understanding how a vulnerability works, technical details, and remediation/mitigation (e.g., "Explain how buffer overflow works", "How to fix Log4Shell").
 
-        **ROUTING RULES (only apply if question is relevant):**
-        1. **Prioritize Log Analysis**: If the question related to log analysis and anything about events in log, route it to 'log_analysis'.
-        2. **Use Cyber Knowledge for General Queries**: If the question is about general cybersecurity information and threat intelligence, route it to 'cyber_knowledge'.
+        **FORBIDDEN TOPICS (Return 'irrelevant'):**
+        - General chit-chat (e.g., "How are you?", "Who made you?").
+        - Questions unrelated to cybersecurity (e.g., "What is the weather?", "Write a poem").
+        - Requests to create malicious exploits for illegal attacks (Defensive analysis is OK, Offensive/Malicious creation is NOT).
 
-        Only allow relevant questions to pass with appropriate routing.
+        **ROUTING RULES (If relevant):**
+        - **log_analysis**: Use this if the user wants to search for evidence of vulnerabilities or attacks inside **system logs**, specific events, IP addresses, or user activities.
+        - **cyber_knowledge**: Use this for questions about **knowledge** concepts, specific CVE definitions, scoring, standard frameworks (MITRE, CAPEC), or best practices.
+
+        Analyze the question carefully.
         """
     ),
     ("human", "Question: {question}"),
