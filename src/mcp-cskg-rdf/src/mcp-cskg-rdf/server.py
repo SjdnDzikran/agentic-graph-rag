@@ -54,6 +54,28 @@ RDF = rdflib.Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 RDFS = rdflib.Namespace("http://www.w3.org/2000/01/rdf-schema#")
 OWL = rdflib.Namespace("http://www.w3.org/2002/07/owl#")
 
+STANDARD_PREFIX_BLOCK = """\
+PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
+PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
+PREFIX cpe: <http://w3id.org/sepses/vocab/ref/cpe#>
+PREFIX cwe: <http://w3id.org/sepses/vocab/ref/cwe#>
+PREFIX capec: <http://w3id.org/sepses/vocab/ref/capec#>
+PREFIX attack: <http://w3id.org/sepses/vocab/ref/attack#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+"""
+
+NAMESPACE_REWRITES = {
+    "http://w3id.org/sepses/vocab/cve#": "http://w3id.org/sepses/vocab/ref/cve#",
+    "http://w3id.org/sepses/vocab/cvss#": "http://w3id.org/sepses/vocab/ref/cvss#",
+    "http://w3id.org/sepses/vocab/cpe#": "http://w3id.org/sepses/vocab/ref/cpe#",
+    "http://w3id.org/sepses/vocab/cwe#": "http://w3id.org/sepses/vocab/ref/cwe#",
+    "http://w3id.org/sepses/vocab/capec#": "http://w3id.org/sepses/vocab/ref/capec#",
+    "http://w3id.org/sepses/vocab/attack#": "http://w3id.org/sepses/vocab/ref/attack#",
+}
+
 # Initialize FastMCP server
 mcp = FastMCP(
     "MITRE ATT&CK SPARQL",
@@ -154,6 +176,19 @@ def format_sparql_results(results, include_description: bool = False) -> str:
     
     return "\n".join(formatted_results)
 
+
+def prepare_query(query: str) -> str:
+    """Normalize namespace prefixes and ensure the SEPSES defaults are available."""
+    normalized = query
+    for wrong, correct in NAMESPACE_REWRITES.items():
+        normalized = normalized.replace(wrong, correct)
+
+    stripped = normalized.lstrip()
+    if not stripped.upper().startswith("PREFIX"):
+        normalized = STANDARD_PREFIX_BLOCK + "\n" + normalized
+
+    return normalized
+
 #################################################################
 # Core Infrastructure Tools
 #################################################################
@@ -188,6 +223,7 @@ def execute_sparql_query(query: str, ctx: Context, include_description: bool = F
         Formatted query results
     """
     graph = ctx.request_context.lifespan_context["graph"]
+    query = prepare_query(query)
     start_time = time.time()
     
     try:
@@ -1075,11 +1111,14 @@ def get_all_cves(ctx: Context, include_description: bool = False) -> str:
     PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
     
-    SELECT ?cve ?description WHERE {
-        ?cve a cve:CVE .
-        OPTIONAL { ?cve dcterms:description ?description }
+    SELECT DISTINCT ?cveId ?description WHERE {
+        GRAPH ?g {
+            ?cve a cve:CVE ;
+                 cve:id ?cveId ;
+                 dcterms:description ?description .
+        }
     }
-    ORDER BY ?cve
+    ORDER BY ?cveId
     LIMIT 50
     """
     return execute_sparql_query(query, ctx, include_description)
@@ -1097,12 +1136,15 @@ def get_cve_by_id(cve_id: str, ctx: Context, include_description: bool = False) 
     PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
     
-    SELECT ?cve ?description ?publishedDate ?modifiedDate WHERE {{
-        ?cve a cve:CVE .
-        FILTER(CONTAINS(STR(?cve), "{cve_id}"))
-        OPTIONAL {{ ?cve dcterms:description ?description }}
-        OPTIONAL {{ ?cve dcterms:created ?publishedDate }}
-        OPTIONAL {{ ?cve dcterms:modified ?modifiedDate }}
+    SELECT ?cveId ?description ?issued ?modified WHERE {{
+        GRAPH ?g {{
+            ?cve a cve:CVE ;
+                 cve:id ?cveId ;
+                 dcterms:description ?description ;
+                 dcterms:issued ?issued ;
+                 dcterms:modified ?modified .
+            FILTER(CONTAINS(LCASE(?cveId), LCASE("{cve_id}")))
+        }}
     }}
     """
     
@@ -1121,14 +1163,15 @@ def search_cves_by_keyword(keyword: str, ctx: Context, include_description: bool
     PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
     
-    SELECT ?cve ?description WHERE {{
-        ?cve a cve:CVE .
-        OPTIONAL {{ ?cve dcterms:description ?description }}
-        FILTER(
-            CONTAINS(LCASE(?description), LCASE("{keyword}"))
-        )
+    SELECT DISTINCT ?cveId ?description WHERE {{
+        GRAPH ?g {{
+            ?cve a cve:CVE ;
+                 cve:id ?cveId ;
+                 dcterms:description ?description .
+            FILTER(CONTAINS(LCASE(?description), LCASE("{keyword}")))
+        }}
     }}
-    ORDER BY ?cve
+    ORDER BY ?cveId
     LIMIT 50
     """
     
@@ -1152,16 +1195,21 @@ def get_cves_by_cvss_score(min_score: float, max_score: float, ctx:Context, incl
         PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
         PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
         PREFIX dcterms: <http://purl.org/dc/terms/>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
         
-        SELECT ?cve ?description ?baseScore WHERE {{
-            ?cve a cve:CVE .
-            ?cve cve:hasCVSS3BaseMetric ?cvss3 .
-            ?cvss3 cvss:baseScore ?baseScore .
-            OPTIONAL {{ ?cve dcterms:description ?description }}
-            FILTER(xsd:integer(?baseScore) >= {min_score} && xsd:integer(?baseScore) <= {max_score})
+        SELECT DISTINCT ?cveId ?description ?baseScore WHERE {{
+            GRAPH ?g1 {{
+                ?cve a cve:CVE ;
+                     cve:id ?cveId ;
+                     dcterms:description ?description ;
+                     cve:hasCVSS3BaseMetric ?cvss3 .
+            }}
+            GRAPH ?g2 {{
+                ?cvss3 cvss:baseScore ?baseScore .
+            }}
+            FILTER(?baseScore >= {min_score} && ?baseScore <= {max_score})
         }}
         ORDER BY DESC(?baseScore)
+        LIMIT 50
         """
     
     return execute_sparql_query(query, ctx, include_description)
@@ -1178,14 +1226,18 @@ def get_high_severity_cves(ctx: Context, include_description: bool = False) -> s
     PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
     PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
-    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     
-    SELECT ?cve ?description ?baseScore WHERE {
-        ?cve a cve:CVE .
-            ?cve cve:hasCVSS3BaseMetric ?cvss3 .
+    SELECT DISTINCT ?cveId ?description ?baseScore WHERE {
+        GRAPH ?g1 {
+            ?cve a cve:CVE ;
+                 cve:id ?cveId ;
+                 dcterms:description ?description ;
+                 cve:hasCVSS3BaseMetric ?cvss3 .
+        }
+        GRAPH ?g2 {
             ?cvss3 cvss:baseScore ?baseScore .
-        OPTIONAL { ?cve dcterms:description ?description }
-        FILTER(xsd:integer(?baseScore) >= 7.0)
+        }
+        FILTER(?baseScore >= 7.0)
     }
     ORDER BY DESC(?baseScore)
     LIMIT 50
@@ -1205,14 +1257,18 @@ def get_critical_cves(ctx: Context, include_description: bool = False) -> str:
     PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
     PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
-    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     
-    SELECT ?cve ?description ?baseScore WHERE {
-        ?cve a cve:CVE .
-            ?cve cve:hasCVSS3BaseMetric ?cvss3 .
+    SELECT DISTINCT ?cveId ?description ?baseScore WHERE {
+        GRAPH ?g1 {
+            ?cve a cve:CVE ;
+                 cve:id ?cveId ;
+                 dcterms:description ?description ;
+                 cve:hasCVSS3BaseMetric ?cvss3 .
+        }
+        GRAPH ?g2 {
             ?cvss3 cvss:baseScore ?baseScore .
-        OPTIONAL { ?cve dcterms:description ?description }
-        FILTER(xsd:integer(?baseScore) >= 9.0)
+        }
+        FILTER(?baseScore >= 9.0)
     }
     ORDER BY DESC(?baseScore)
     LIMIT 50
@@ -1263,30 +1319,27 @@ def get_recent_cves(days: int = 30, ctx: Context = None, include_description: bo
         ctx: FastMCP context object
         include_description: Whether to include descriptions (default: False)
     """
+    from datetime import datetime, timedelta
+    
+    # Calculate the date N days ago
+    cutoff_date = datetime.now() - timedelta(days=days)
+    cutoff_date_str = cutoff_date.strftime("%Y-%m-%dT00:00:00")
+    
     query = f"""
     PREFIX cve: <http://w3id.org/sepses/vocab/ref/cve#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
-    PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     
-    SELECT ?cve ?title ?publishedDate ?baseScore WHERE {{
-        ?cve a cve:CVE .
-        ?cve dcterms:created ?publishedDate .
-        OPTIONAL {{ ?cve dcterms:title ?title }}
-        
-        OPTIONAL {{
-            {{
-                ?cve cve:hasCVSS3BaseMetric ?cvss3 .
-                ?cvss3 cvss:baseScore ?baseScore .
-            }} UNION {{
-                ?cve cve:hasCVSS2BaseMetric ?cvss2 .
-                ?cvss2 cvss:baseScore ?baseScore .
-            }}
+    SELECT DISTINCT ?cveId ?description ?issued WHERE {{
+        GRAPH ?g {{
+            ?cve a cve:CVE ;
+                 cve:id ?cveId ;
+                 dcterms:description ?description ;
+                 dcterms:issued ?issued .
         }}
-        
-        FILTER(?publishedDate >= (NOW() - "P{days}D"^^xsd:duration))
+        FILTER(?issued >= "{cutoff_date_str}"^^xsd:dateTime)
     }}
-    ORDER BY DESC(?publishedDate) DESC(?baseScore)
+    ORDER BY DESC(?issued)
     LIMIT 100
     """
     
@@ -1306,24 +1359,27 @@ def get_cves_by_year(year: int, ctx: Context, include_description: bool = False)
     PREFIX dcterms: <http://purl.org/dc/terms/>
     PREFIX cvss: <http://w3id.org/sepses/vocab/ref/cvss#>
     
-    SELECT ?cve ?title ?publishedDate ?baseScore WHERE {{
-        ?cve a cve:CVE .
-        ?cve dcterms:created ?publishedDate .
-        OPTIONAL {{ ?cve dcterms:title ?title }}
-        
+    SELECT DISTINCT ?cveId ?description ?issued ?baseScore WHERE {{
+        GRAPH ?g1 {{
+            ?cve a cve:CVE ;
+                 cve:id ?cveId ;
+                 dcterms:description ?description ;
+                 dcterms:issued ?issued .
+        }}
         OPTIONAL {{
-            {{
-                ?cve cve:hasCVSS3BaseMetric ?cvss3 .
-                ?cvss3 cvss:baseScore ?baseScore .
-            }} UNION {{
-                ?cve cve:hasCVSS2BaseMetric ?cvss2 .
-                ?cvss2 cvss:baseScore ?baseScore .
+            GRAPH ?g2 {{
+                {{
+                    ?cve cve:hasCVSS3BaseMetric ?cvss3 .
+                    ?cvss3 cvss:baseScore ?baseScore .
+                }} UNION {{
+                    ?cve cve:hasCVSS2BaseMetric ?cvss2 .
+                    ?cvss2 cvss:baseScore ?baseScore .
+                }}
             }}
         }}
-        
-        FILTER(YEAR(?publishedDate) = {year})
+        FILTER(YEAR(?issued) = {year})
     }}
-    ORDER BY DESC(?publishedDate) DESC(?baseScore)
+    ORDER BY DESC(?issued) DESC(?baseScore)
     LIMIT 500
     """
     
@@ -1360,7 +1416,8 @@ def text_to_sparql(prompt: str, ctx: Context, include_description: bool = False)
 
     encoder = tiktoken.get_encoding("gpt2")
     max_tokens = ctx.request_context.lifespan_context.get("max_tokens", 10000)
-    input_tokens = len(encoder.encode(sanitized))
+    prepared_query = prepare_query(sanitized)
+    input_tokens = len(encoder.encode(prepared_query))
     if input_tokens > max_tokens:
         return (
             f"Error: Input exceeds token limit ({input_tokens} tokens > {max_tokens}). "
@@ -1369,7 +1426,7 @@ def text_to_sparql(prompt: str, ctx: Context, include_description: bool = False)
 
     start_time = time.time()
     try:
-        results = execute_sparql_query(sanitized, ctx, include_description)
+        results = execute_sparql_query(prepared_query, ctx, include_description)
     except Exception as exc:
         logger.error(f"Failed to run custom SPARQL query: {exc}")
         return f"Error executing SPARQL query: {exc}"

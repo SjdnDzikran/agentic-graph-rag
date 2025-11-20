@@ -45,3 +45,30 @@ There are no critical OpenSSL CVEs (CVSS score >= 9.0) found in the last 5 years
 2025-11-20 07:44:33,763 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
 I am sorry, but I am unable to retrieve CVE information at this time. The tool encountered an error when trying to access the CVE data. Please try again later or contact support if the issue persists.
 2025-11-20 07:44:33,764 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 07:52:49,164 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 07:52:51,018 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 07:52:51,018 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 07:52:51,020 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 07:52:51,021 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 07:52:51,021 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 07:53:30,292 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+There are no critical or high-severity OpenSSL CVEs (CVSS score >= 7.0) from the last 5 years in the knowledge base.
+2025-11-20 07:53:30,293 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 07:57:13,862 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 07:57:15,731 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 07:57:15,732 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 07:57:15,732 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 07:57:15,734 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 07:57:15,734 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 07:57:34,379 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+I am unable to rank critical OpenSSL CVEs from the last 5 years. I can retrieve critical CVEs, but I cannot filter them by specific software like OpenSSL, nor can I combine a time-based filter with a criticality filter for a specific software.
+2025-11-20 07:57:34,381 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-20 08:00:33,722 - src.graph.workflow - INFO - --- Executing Node: [[Guardrails & Router]] ---
+2025-11-20 08:00:35,358 - src.graph.workflow - INFO - [[Guardrails]]: Question is relevant.
+2025-11-20 08:00:35,358 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-20 08:00:35,359 - src.graph.workflow - INFO - [Decision] Question is about general cybersecurity information and threat intelligence, proceeding to MCP RDF agent.
+2025-11-20 08:00:35,361 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-20 08:00:35,361 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering direct question: 'Rank the most critical OpenSSL CVEs from the last 5 years'
+2025-11-20 08:01:04,347 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+I couldn't find any critical OpenSSL CVEs from the last 5 years based on your criteria.
+2025-11-20 08:01:04,348 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
