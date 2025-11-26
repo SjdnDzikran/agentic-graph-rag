@@ -31,11 +31,11 @@ os.environ["LANGCHAIN_API_KEY"] = os.environ.get("LANGCHAIN_API_KEY")
 os.environ["LANGCHAIN_ENDPOINT"] = os.environ.get("LANGCHAIN_ENDPOINT", "")
 
 # --- LLM init ---
-# Using Google Gemini Flash Latest (generic alias)
+# Using Google Gemini Pro (Standard)
 llm = ChatGoogleGenerativeAI(
-    model="gemini-flash-latest",
+    model="gemini-pro-latest",
     temperature=0,
-    max_retries=2,
+    max_retries=10,
 )
 
 # Koneksi ke DB Lokal (MITRE ATT&CK)

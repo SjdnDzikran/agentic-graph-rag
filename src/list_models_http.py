@@ -20,7 +20,7 @@ try:
         models = response.json().get('models', [])
         print("Available models:")
         for m in models:
-            if 'generateContent' in m.get('supportedGenerationMethods', []):
+            if '1.5' in m['name'] and 'generateContent' in m.get('supportedGenerationMethods', []):
                 print(m['name'])
     else:
         print(f"Error: {response.status_code} - {response.text}")
