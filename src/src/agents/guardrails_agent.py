@@ -1,44 +1,66 @@
-from typing import Literal
-from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel, Field
+from langchain_google_genai import ChatGoogleGenerativeAI
+from src.graph.state import GraphState
 from src.config.settings import llm
 
-class GuardrailsRouterOutput(BaseModel):
-    """
-    Combined output for guardrails checking and routing decisions
-    """
-    decision: Literal["relevant", "irrelevant"] = Field(
-        description="Checks if the question is relevant to cybersecurity topics including log analysis, threat detection, vulnerability assessment and attack pattern reconstruction."
+# 1. Definisikan Struktur Output agar jawabannya pasti (True/False)
+class GuardrailsOutput(BaseModel):
+    is_relevant: bool = Field(
+        description="True if the query is related to vulnerability assessment, cybersecurity, CVEs, or software security. False otherwise."
     )
-    datasource: Literal["log_analysis", "cyber_knowledge"] = Field(
-        description="Routes relevant questions to 'log_analysis' for log analysis and specific question related to log in the system or to 'cyber_knowledge' for general cybersecurity questions. Only populated if decision is 'relevant'."
+    reason: str = Field(
+        description="Brief explanation why the query is relevant or not."
     )
 
-guardrails_router_prompt = ChatPromptTemplate.from_messages([
-    (
-        "system", 
-        """
-        You are a gatekeeper and router for a Q&A system that queries a knowledge graph.
-        Your task is to:
-        1. Determine if a question is answerable by the graph (guardrails)
-        2. If relevant, route it to the appropriate tool
-        
-        The graph contains two types of information:
-            1. **Log Data:** Detailed records of system events, including specific users, servers, hosts, processes, and session activities (e.g., login successes or failures).
-            2. **Cybersecurity Knowledge:** knowledge base for threat intelligence, including CVE, CWE, CAPEC and MITRE ATT&CK.
+def guardrails_node(state: GraphState):
+    """
+    Agent untuk memvalidasi apakah pertanyaan user relevan dengan Vulnerability Assessment.
+    """
+    print("---GUARDRAILS CHECK---")
+    question = state["question"]
 
-        **GUARDRAILS RULES:**
-        - A question is **relevant** if it asks about security log analysis such as finding suspicious activities in log or identify specific entities in logs such as users, hosts, ip-address, log events, OR general cybersecurity topics.
-        - A question is **irrelevant** if it is completely off-topic (e.g., 'what is the weather?', 'tell me a joke').
+    # 2. Setup LLM (Gunakan model yang cepat & murah)
+    # llm is imported from settings.py
+    
+    # 3. Prompt Khusus Vulnerability Assessment
+    system_prompt = """You are a strict Guardrails Agent for a Vulnerability Assessment System.
+    Your job is to filter user queries.
+    
+    ALLOWED TOPICS (Return is_relevant=True):
+    - Finding/Detecting software vulnerabilities (CVEs, bugs, flaws).
+    - Scoring vulnerabilities (CVSS scores, severity levels).
+    - Prioritizing vulnerabilities (risk assessment, what to fix first).
+    - Explaining vulnerabilities (how an exploit works, remediation, patches).
+    - General cybersecurity concepts related to defense and analysis.
+    - Asset Inventory (servers, laptops, devices).
+    - Software Versions and Installed Applications.
+    
+    FORBIDDEN TOPICS (Return is_relevant=False):
+    - General conversational chit-chat (e.g., "How are you?", "Weather").
+    - Creating malicious code or exploit scripts for illegal purposes (Finding/Explaining is OK, Creating attacks is NOT).
+    - Non-technical topics (Cooking, Sports, Politics).
+    
+    Analyze the user question and determine if it fits the ALLOWED TOPICS.
+    """
 
-        **ROUTING RULES (only apply if question is relevant):**
-        1. **Prioritize Log Analysis**: If the question related to log analysis and anything about events in log, route it to 'log_analysis'.
-        2. **Use Cyber Knowledge for General Queries**: If the question is about general cybersecurity information and threat intelligence, route it to 'cyber_knowledge'.
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        ("human", "{question}"),
+    ])
 
-        Only allow relevant questions to pass with appropriate routing.
-        """
-    ),
-    ("human", "Question: {question}"),
-])
+    # 4. Chain dengan Structured Output
+    structured_llm = llm.with_structured_output(GuardrailsOutput)
+    chain = prompt | structured_llm
 
-guardrails_router_chain = guardrails_router_prompt | llm.with_structured_output(GuardrailsRouterOutput)
+    result = chain.invoke({"question": question})
+
+    # 5. Simpan keputusan ke State
+    print(f"---GUARDRAILS DECISION: {result.is_relevant} ({result.reason})---")
+    
+    return {
+        "is_relevant": result.is_relevant,
+        "guardrail_reason": result.reason,
+        # Jika tidak relevan, kita bisa langsung isi 'generation' dengan pesan penolakan
+        "generation": result.reason if not result.is_relevant else state.get("generation")
+    }

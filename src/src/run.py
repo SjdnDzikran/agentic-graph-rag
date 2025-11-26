@@ -8,6 +8,8 @@ import logging
 async def main():
     """The main function is to run the agent."""
     setup_logging()
+    from src.config.settings import llm
+    print(f"DEBUG: LLM Configured: {llm}")
     logging.getLogger('mcp_use').propagate = False
     
     parser = argparse.ArgumentParser(description="Run Multi-Agent with questions.")
@@ -28,7 +30,7 @@ async def main():
     final_result = await app.ainvoke(initial_state, config=config)
     
     print("\n--- Final Answer ---")
-    print(final_result.get('answer'))
+    print(final_result.get('generation'))
 
 if __name__ == "__main__":
     asyncio.run(main())

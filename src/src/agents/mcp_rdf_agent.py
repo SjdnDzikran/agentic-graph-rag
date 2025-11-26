@@ -15,32 +15,26 @@ def get_mcp_client():
     """Inisialisasi dan mengembalikan MCPClient (hanya sekali)."""
     global _mcp_client
     if _mcp_client is None:
-        config_path = None
-        for parent in Path(__file__).resolve().parents:
-            candidate = parent / "browser_mcp.json"
-            if candidate.exists():
-                config_path = candidate
-                break
-        if config_path is None:
-            raise FileNotFoundError("MCP config file not found in current or parent directories.")
+        project_root = Path(__file__).parent.parent.parent
+        config_path = project_root / "browser_mcp.json"
+        if not config_path.exists():
+            raise FileNotFoundError(f"MCP config file not found at {config_path}")
         os.environ["MCP_USE_ANONYMIZED_TELEMETRY"] = "false"
         _mcp_client = MCPClient.from_config_file(str(config_path))
     return _mcp_client
 
 strict_system_prompt = """
-You are a specialized cybersecurity assistant grounded in the SEPSES Cybersecurity Knowledge Graph.
-Answer questions ONLY via the available MCP tools, which surface data from the SEPSES SPARQL
-endpoint (CVE, CVSS, CPE, CWE, CAPEC, ATT&CK, Snort, etc.).
+You are a specialized cybersecurity assistant. You MUST answer questions ONLY by using the provided tools. Your only source of information is the knowledge graph accessed via tools.
 
-Workflow:
-1. Analyze the user's intent.
-2. Select the most appropriate tool. Prefer the focused helper tools when possible.
-3. Execute the tool. When you must run an ad-hoc SPARQL query, call `text_to_sparql`
-   and pass the full SPARQL statement as the `prompt`.
-4. Inspect the results:
-   - Validation errors mean you supplied invalid arguments—adjust and retry.
-   - Empty results mean the data may not exist or the query is too specific—broaden or try another tool.
-5. Never answer from memory; every statement must trace back to tool output.
+Your thought process MUST be:
+    1.  **Analyze the user's question** to understand the core intent.
+    2.  **Select the best tool.**.
+    3.  **Execute the tool.**  If that fails or the question is complex, use `text_to_sparql` to convert the question into a precise SPARQL query.
+    4.  **Analyze the result.**
+        - If the result is a **validation error** (like a Pydantic error), it means you provided the wrong arguments to the tool. Read the error message carefully. DO NOT use the same tool with the exact same arguments again. Correct the arguments and retry. For tools requiring `ctx`, DO NOT provide a value for it; the system handles it.
+        - If the result is **empty or "not found"**, the information may not exist, or your query was too narrow. Try rephrasing your input for the tool, perhaps using a broader term.
+        - If you are stuck in a loop of failures, only then you must state that you could not find the information.
+    5.  **NEVER provide an answer from memory.** All answers must be based on tool results.
 """
 
 async def run_mcp_agent(question: str) -> str:

@@ -1,0 +1,48 @@
+@prefix attack: <http://w3id.org/sepses/vocab/ref/attack#> .
+@prefix cve: <http://w3id.org/sepses/vocab/ref/cve#> .
+@prefix cvss: <http://w3id.org/sepses/vocab/ref/cvss#> .
+@prefix dcterm: <http://purl.org/dc/terms/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# --- Tactic: Initial Access ---
+attack:Tactic_Initial_Access a attack:Tactic ;
+    dcterm:title "Initial Access" ;
+    dcterm:description "The adversary is trying to get into your network." .
+
+# --- Technique: Phishing ---
+attack:Technique_Phishing a attack:Technique ;
+    dcterm:title "Phishing" ;
+    dcterm:description "Adversaries may send phishing messages to gain access to victim systems." ;
+    attack:accomplishesTactic attack:Tactic_Initial_Access ;
+    attack:platform "Windows", "Linux", "macOS" .
+
+# --- Mitigation: User Training ---
+attack:Mitigation_Training a attack:Mitigation ;
+    dcterm:title "User Training" ;
+    attack:preventsTechnique attack:Technique_Phishing .
+
+attack:Technique_Phishing attack:hasMitigation attack:Mitigation_Training .
+
+# --- Adversary Group: Mock APT ---
+attack:Group_MockAPT a attack:AdversaryGroup ;
+    dcterm:title "Mock APT Group" ;
+    attack:usesTechnique attack:Technique_Phishing .
+
+# --- Malware: MockRat ---
+attack:Malware_MockRat a attack:Malware ;
+    dcterm:title "MockRat" ;
+    attack:implementsTechnique attack:Technique_Phishing .
+
+attack:Group_MockAPT attack:usesMalware attack:Malware_MockRat .
+
+# --- Dummy CVE ---
+cve:CVE-2024-9999 a cve:CVE ;
+    dcterm:title "CVE-2024-9999" ;
+    dcterm:description "A critical buffer overflow in MockService." ;
+    dcterm:created "2024-01-01"^^xsd:date ;
+    cve:hasCVSS3BaseMetric [
+        a cvss:CVSS3BaseMetric ;
+        cvss:baseScore "9.8"^^xsd:decimal
+    ] .
