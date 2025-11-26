@@ -1,0 +1,75 @@
+2025-11-27 02:21:06,764 - src.graph.workflow - INFO - --- Executing Node: [[Router]] ---
+2025-11-27 02:21:08,387 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-27 02:21:08,388 - src.graph.workflow - INFO - [Decision] Question is about cyber knowledge, proceeding to MCP RDF agent.
+2025-11-27 02:21:08,390 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-27 02:21:08,390 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering question: 'What is vulnerability'
+2025-11-27 02:21:13,111 - src.agents.mcp_rdf_agent - ERROR - An error occurred while running the MCP Agent: Connection closed
+2025-11-27 02:21:13,113 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+Error during MCP agent execution: Connection closed
+2025-11-27 02:21:13,118 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-27 02:23:20,374 - src.graph.workflow - INFO - --- Executing Node: [[Router]] ---
+2025-11-27 02:23:21,536 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-27 02:23:21,551 - src.graph.workflow - INFO - [Decision] Question is about cyber knowledge, proceeding to MCP RDF agent.
+2025-11-27 02:23:21,553 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-27 02:23:21,565 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering question: 'What is vulnerability'
+2025-11-27 02:23:29,940 - src.agents.mcp_rdf_agent - ERROR - An error occurred while running the MCP Agent: Connection closed
+2025-11-27 02:23:29,942 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+Error during MCP agent execution: Connection closed
+2025-11-27 02:23:29,969 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-27 02:28:41,008 - src.graph.workflow - INFO - --- Executing Node: [[Router]] ---
+2025-11-27 02:28:42,288 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-27 02:28:42,290 - src.graph.workflow - INFO - [Decision] Question is about cyber knowledge, proceeding to MCP RDF agent.
+2025-11-27 02:28:42,292 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-27 02:28:42,293 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering question: 'What is vulerabillity'
+2025-11-27 02:28:45,534 - src.agents.mcp_rdf_agent - ERROR - An error occurred while running the MCP Agent: Connection closed
+2025-11-27 02:28:45,535 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+Error during MCP agent execution: Connection closed
+2025-11-27 02:28:45,537 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-27 02:36:35,169 - src.graph.workflow - INFO - --- Executing Node: [[Router]] ---
+2025-11-27 02:36:36,104 - src.graph.workflow - INFO - [[Router]]: Routing decision: log_analysis -> is_log_question: True
+2025-11-27 02:36:36,136 - src.graph.workflow - INFO - [Decision] Question is about cyber knowledge, proceeding to MCP RDF agent.
+2025-11-27 02:36:36,143 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-27 02:36:36,163 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering question: 'How many failed logins for user 'admin'?'
+2025-11-27 02:36:39,729 - src.agents.mcp_rdf_agent - ERROR - An error occurred while running the MCP Agent: Connection closed
+2025-11-27 02:36:39,730 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+Error during MCP agent execution: Connection closed
+2025-11-27 02:36:39,733 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-27 02:38:28,042 - src.graph.workflow - INFO - --- Executing Node: [[Router]] ---
+2025-11-27 02:38:29,223 - src.graph.workflow - INFO - [[Router]]: Routing decision: log_analysis -> is_log_question: True
+2025-11-27 02:38:29,227 - src.graph.workflow - INFO - [Decision] Question is about logs, proceeding to vector search.
+2025-11-27 02:38:29,231 - src.graph.workflow - INFO - --- Executing Node: [[Vector Agent]] ---
+2025-11-27 02:38:31,274 - src.graph.workflow - INFO - --- Executing Node: [[Cypher Agent]] ---
+2025-11-27 02:38:45,529 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-27 02:52:26,778 - src.graph.workflow - INFO - --- Executing Node: [[Router]] ---
+2025-11-27 02:52:28,003 - src.graph.workflow - INFO - [[Router]]: Routing decision: log_analysis -> is_log_question: True
+2025-11-27 02:52:28,004 - src.graph.workflow - INFO - [Decision] Question is about logs, proceeding to vector search.
+2025-11-27 02:52:28,006 - src.graph.workflow - INFO - --- Executing Node: [[Vector Agent]] ---
+2025-11-27 02:52:30,070 - src.graph.workflow - INFO - --- Executing Node: [[Cypher Agent]] ---
+2025-11-27 02:52:32,377 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-27 02:56:35,972 - src.graph.workflow - INFO - --- Executing Node: [[Router]] ---
+2025-11-27 02:56:37,123 - src.graph.workflow - INFO - [[Router]]: Routing decision: log_analysis -> is_log_question: True
+2025-11-27 02:56:37,124 - src.graph.workflow - INFO - [Decision] Question is about logs, proceeding to vector search.
+2025-11-27 02:56:37,126 - src.graph.workflow - INFO - --- Executing Node: [[Vector Agent]] ---
+2025-11-27 02:56:39,704 - src.graph.workflow - INFO - --- Executing Node: [[Cypher Agent]] ---
+2025-11-27 02:56:44,906 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-27 02:58:21,805 - src.graph.workflow - INFO - --- Executing Node: [[Router]] ---
+2025-11-27 02:58:22,863 - src.graph.workflow - INFO - [[Router]]: Routing decision: cyber_knowledge -> is_log_question: False
+2025-11-27 02:58:22,864 - src.graph.workflow - INFO - [Decision] Question is about cyber knowledge, proceeding to MCP RDF agent.
+2025-11-27 02:58:22,865 - src.graph.workflow - INFO - --- Executing Node: [[mcp_rdf_agent]] ---
+2025-11-27 02:58:22,865 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Answering question: 'What is the vulnerability in my system'
+2025-11-27 02:58:24,424 - src.agents.mcp_rdf_agent - ERROR - An error occurred while running the MCP Agent: Connection closed
+2025-11-27 02:58:24,425 - src.graph.workflow - INFO - [[MCP RDF Agent]]: Search completed. Context found:
+Error during MCP agent execution: Connection closed
+2025-11-27 02:58:24,426 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-27 03:18:37,930 - src.graph.workflow - INFO - --- Executing Node: [[Router]] ---
+2025-11-27 03:18:38,947 - src.graph.workflow - INFO - [[Router]]: Routing decision: log_analysis -> is_log_question: True
+2025-11-27 03:18:38,948 - src.graph.workflow - INFO - [Decision] Question is about logs, proceeding to vector search.
+2025-11-27 03:18:38,949 - src.graph.workflow - INFO - --- Executing Node: [[Vector Agent]] ---
+2025-11-27 03:18:41,308 - src.graph.workflow - INFO - --- Executing Node: [[Cypher Agent]] ---
+2025-11-27 03:18:44,978 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
+2025-11-27 03:21:36,715 - src.graph.workflow - INFO - --- Executing Node: [[Router]] ---
+2025-11-27 03:21:37,756 - src.graph.workflow - INFO - [[Router]]: Routing decision: log_analysis -> is_log_question: True
+2025-11-27 03:21:37,756 - src.graph.workflow - INFO - [Decision] Question is about logs, proceeding to vector search.
+2025-11-27 03:21:37,759 - src.graph.workflow - INFO - --- Executing Node: [[Vector Agent]] ---
+2025-11-27 03:21:41,020 - src.graph.workflow - INFO - --- Executing Node: [[Cypher Agent]] ---
+2025-11-27 03:21:45,670 - src.graph.workflow - INFO - --- Executing Node: [[Synthesizer]] ---
