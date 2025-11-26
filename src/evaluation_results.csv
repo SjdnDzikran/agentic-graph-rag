@@ -1,0 +1,26 @@
+cve_id,gt_score,gt_severity,agentic_score,agentic_severity,agentic_time,agentic_raw_answer
+CVE-2001-1238,7.8,HIGH,1.0,LOW,21.46710991859436,"---
+**1. Original Question:**
+What is the CVSS score and severity for CVE-2001-1238?
+
+**2. Cypher Lo..."
+CVE-2002-0793,5.5,MEDIUM,1.0,LOW,18.44356346130371,"---
+**1. Original Question:**
+What is the CVSS score and severity for CVE-2002-0793?
+
+**2. Cypher Lo..."
+CVE-2015-7421,,CRITICAL,1.0,LOW,16.862371921539307,"---
+**1. Original Question:**
+What is the CVSS score and severity for CVE-2015-7421?
+
+**2. Cypher Lo..."
+CVE-2015-6641,,CRITICAL,1.0,LOW,18.63007402420044,"---
+**1. Original Question:**
+What is the CVSS score and severity for CVE-2015-6641?
+
+**2. Cypher Lo..."
+CVE-2015-4989,,CRITICAL,1.0,LOW,17.14320993423462,"---
+**1. Original Question:**
+What is the CVSS score and severity for CVE-2015-4989?
+
+**2. Cypher Lo..."

@@ -20,4 +20,5 @@ dependencies = [
     "rdflib>=7.1.4",
     "sentence-transformers>=5.0.0",
     "tiktoken>=0.7.0",
+    "pandas>=2.3.3",
 ]

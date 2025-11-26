@@ -1,13 +1,13 @@
-# src/evaluation_week3.py
+# src/evaluation3.py
 import asyncio
 import time
 import pandas as pd
 import random
 import logging
+from google.api_core import exceptions as google_exceptions
 
-# Import your system components
+# Import system components
 from src.graph.workflow import app as agentic_app
-from src.baselines.normal_rag import run_normal_rag
 from src.baselines.cvss_lookup import CVSSBaseline
 from src.utils.metrics import (
     extract_score, 
@@ -16,16 +16,40 @@ from src.utils.metrics import (
     calculate_classification_metrics
 )
 
-# Suppress verbose logs during eval
+# Suppress verbose logs
 logging.getLogger("src.graph.workflow").setLevel(logging.ERROR)
+
+# --- FUNGSI RETRY OTOMATIS (FIX LIMIT) ---
+async def run_with_retry(func, *args, retries=5, delay=10):
+    """
+    Menjalankan fungsi (sync atau async) dengan mekanisme retry 
+    jika terkena limit kuota Gemini.
+    """
+    for i in range(retries):
+        try:
+            if asyncio.iscoroutinefunction(func):
+                return await func(*args)
+            else:
+                return func(*args)
+        except Exception as e:
+            error_msg = str(e).lower()
+            # Cek error 429 atau Quota exceeded
+            if "429" in error_msg or "quota" in error_msg or "resourceexhausted" in error_msg:
+                wait_time = delay * (2 ** i) # Exponential backoff (10s, 20s, 40s...)
+                print(f"\n[!] Kena Limit (Quota Exceeded). Menunggu {wait_time} detik sebelum coba lagi...")
+                await asyncio.sleep(wait_time)
+            else:
+                # Jika error lain, jangan retry
+                raise e
+    return "Error: Failed after max retries"
 
 async def get_agentic_response(question: str):
     """Helper to invoke the Agentic Graph RAG"""
     inputs = {"question": question, "original_question": question}
-    config = {"recursion_limit": 5}
+    config = {"recursion_limit": 10} # Limit rekursi untuk workflow yang kompleks
     
     try:
-        # ainvoke is the async method for LangGraph applications
+        # Panggil ainvoke dengan retry handling
         result = await agentic_app.ainvoke(inputs, config=config)
         return result.get('answer', "No answer generated.")
     except Exception as e:
@@ -34,91 +58,98 @@ async def get_agentic_response(question: str):
 async def run_experiments():
     # 1. Setup Data
     cvss_lookup = CVSSBaseline()
-    # Get a random sample of CVEs (or specific ones for consistency)
+    
+    # Ambil sample CVE
+    if cvss_lookup.df.empty:
+        print("❌ Dataset kosong atau tidak ditemukan. Pastikan data/cve_dataset.csv ada.")
+        return
+
     all_ids = cvss_lookup.df['id'].tolist()
-    # Sampling 5 for a quick test, increase to 50-100 for final report
+    # Gunakan sample kecil (misal 5) untuk tes cepat, atau lebih banyak untuk hasil akurat
     test_cves = random.sample(all_ids, min(5, len(all_ids))) 
     
     results = []
-    print(f"--- Starting Week 3 Evaluation on {len(test_cves)} CVEs ---")
+    print(f"--- Starting Evaluation on {len(test_cves)} CVEs (Agentic Only) ---")
 
     for cve_id in test_cves:
         print(f"\n[Eval] Processing {cve_id}...")
         
-        # A. Ground Truth
+        # A. Ground Truth (Traditional CVSS / Baseline)
         gt_data = cvss_lookup.get_vulnerability_details(cve_id)
-        if not gt_data: continue
-        gt_score = float(gt_data['cvss_score']) if gt_data['cvss_score'] else 0.0
-        gt_severity = gt_data['severity'] if gt_data['severity'] else "UNKNOWN"
+        if not gt_data: 
+            print(f"   Skip {cve_id} (No Ground Truth)")
+            continue
+            
+        # FIX: Ensure Score is float and Severity matches the prediction format (UPPERCASE)
+        gt_score = float(gt_data['cvss_score']) if gt_data['cvss_score'] != 'N/A' else 0.0
+        
+        # --- PERBAIKAN DI SINI ---
+        # Jangan ambil teks mentah dari CSV (karena mungkin 'N/A' atau 'High').
+        # Hitung label dari skor agar formatnya sama dengan prediksi (LOW/MEDIUM/HIGH/CRITICAL).
+        gt_severity = get_severity_label(gt_score)
 
         query = f"What is the CVSS score and severity for {cve_id}?"
 
-        # B. Normal RAG
-        start_norm = time.time()
-        norm_res = run_normal_rag(query)
-        norm_time = time.time() - start_norm
-        norm_text = norm_res['answer']
-        
-        # C. Agentic RAG
+        # B. Agentic RAG (The 'Fork' Agent)
+        print("   Running Agentic RAG...", end="", flush=True)
         start_agent = time.time()
-        agent_text = await get_agentic_response(query)
+        agent_text = await run_with_retry(get_agentic_response, query)
         agent_time = time.time() - start_agent
+        print(" Done.")
         
-        # D. Extraction
-        norm_score_pred = extract_score(norm_text)
+        # C. Extraction & Metrics
         agent_score_pred = extract_score(agent_text)
-        
-        norm_severity_pred = get_severity_label(norm_score_pred)
-        # For agentic, we can try to extract severity text, or derive from score
-        # Here we derive from score for consistency in comparison
-        agent_severity_pred = get_severity_label(agent_score_pred) 
+        agent_severity_pred = get_severity_label(agent_score_pred)
 
         results.append({
             "cve_id": cve_id,
             "gt_score": gt_score,
             "gt_severity": gt_severity,
-            # Normal RAG
-            "normal_score": norm_score_pred,
-            "normal_severity": norm_severity_pred,
-            "normal_time": norm_time,
-            # Agentic RAG
+            # Agentic RAG Results
             "agentic_score": agent_score_pred,
             "agentic_severity": agent_severity_pred,
-            "agentic_time": agent_time
+            "agentic_time": agent_time,
+            "agentic_raw_answer": agent_text[:100] + "..." 
         })
 
+        # --- COOLING DOWN ---
+        # Jeda untuk menghindari rate limit API
+        print("   Cooling down for 5s...")
+        await asyncio.sleep(5)
+
     # 2. Calculate Aggregate Metrics
+    if not results:
+        print("No results collected.")
+        return
+
     df = pd.DataFrame(results)
     
-    # Ranking Correlation (Spearman)
-    # Compares how well the system ranks vulnerabilities (e.g. does it know Critical > Low)
-    rho_normal = calculate_spearman_rank_correlation(df['gt_score'].tolist(), df['normal_score'].tolist())
+    # Ranking Correlation (Spearman) - Hanya untuk Agentic
     rho_agentic = calculate_spearman_rank_correlation(df['gt_score'].tolist(), df['agentic_score'].tolist())
     
-    # Classification Metrics (Precision/Recall for Severity Labels)
-    metrics_normal = calculate_classification_metrics(df['gt_severity'].tolist(), df['normal_severity'].tolist())
+    # Classification Metrics - Hanya untuk Agentic
     metrics_agentic = calculate_classification_metrics(df['gt_severity'].tolist(), df['agentic_severity'].tolist())
 
     # 3. Display Final Report
     print("\n\n" + "="*40)
-    print("       WEEK 3 EXPERIMENTAL RESULTS       ")
+    print("       EXPERIMENTAL RESULTS (AGENTIC ONLY)       ")
     print("="*40)
     
     print(f"\n1. Ranking Correlation (Spearman's Rho):")
-    print(f"   - Normal RAG:  {rho_normal:.4f}")
-    print(f"   - Agentic RAG: {rho_agentic:.4f} (Target: > Normal)")
+    print(f"   - Agentic RAG: {rho_agentic:.4f} (Target: mendekati 1.0)")
     
     print(f"\n2. Accuracy Metrics (Severity Classification):")
-    print(f"   - Normal RAG:  Acc={metrics_normal['accuracy']:.2f}, Prec={metrics_normal['macro_precision']:.2f}, Rec={metrics_normal['macro_recall']:.2f}")
-    print(f"   - Agentic RAG: Acc={metrics_agentic['accuracy']:.2f}, Prec={metrics_agentic['macro_precision']:.2f}, Rec={metrics_agentic['macro_recall']:.2f}")
+    print(f"   - Accuracy:  {metrics_agentic.get('accuracy', 0):.2f}")
+    print(f"   - Precision: {metrics_agentic.get('macro_precision', 0):.2f}")
+    print(f"   - Recall:    {metrics_agentic.get('macro_recall', 0):.2f}")
+    print(f"   - F1 Score:  {metrics_agentic.get('f1', 0):.2f}")
     
     print(f"\n3. Average Response Time (Latency):")
-    print(f"   - Normal RAG:  {df['normal_time'].mean():.2f} seconds")
     print(f"   - Agentic RAG: {df['agentic_time'].mean():.2f} seconds")
     
-    # Save detailed CSV for report
-    df.to_csv("week3_results.csv", index=False)
-    print(f"\nDetailed results saved to 'week3_results.csv'")
+    # Save detailed CSV
+    df.to_csv("evaluation_results.csv", index=False)
+    print(f"\nDetailed results saved to 'evaluation_results.csv'")
 
 if __name__ == "__main__":
     asyncio.run(run_experiments())
