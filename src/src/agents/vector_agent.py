@@ -7,25 +7,27 @@ from src.config.settings import llm, graph, vector_index
 
 # --- Entity Extraction ---
 class LogEntities(BaseModel):
-    """Identifies information about resources in the log."""
+    """Identifies information about vulnerability-related resources."""
 
     entity_values: List[str] = Field(
         ...,
-        description="All entities such as User, Server, Service, Host, "
-        "System, Software, Device, Process, Machine, Session, or Document file names that appear in the text.",
+        description="All entities such as CVE IDs, CWE IDs, CAPEC IDs, "
+        "Product names, Vendor names, Software versions, Component names, "
+        "CVSS scores, Exploit names, or Mitigation techniques that appear in the text.",
     )
 
 entity_prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are an expert at extracting entities from text related to system logs. "
-            "Extract the name or ID of entities such as User, Server, Service, "
-            "Host, System, Software, Device, Process, Machine, Session, and the filename of the Document.",
+            "You are an expert at extracting vulnerability-related entities from text. "
+            "Extract CVE identifiers (e.g., CVE-2024-1234), CWE identifiers (e.g., CWE-79), "
+            "CAPEC identifiers (e.g., CAPEC-18), product names, vendor names, software versions, "
+            "affected components, CVSS scores, exploit names, and mitigation techniques.",
         ),
         (
             "human",
-            "Use the given format to extract information from"
+            "Use the given format to extract information from "
             "the following input: {question}",
         ),
     ]
@@ -73,16 +75,22 @@ def structured_retriever(question: str) -> str:
             
             MATCH (chunk:Chunk)-[:HAS_ENTITY]->(entity)
             
-            OPTIONAL MATCH (chunk)-[:PART_OF]->(doc:Document)
+            OPTIONAL MATCH (chunk)-[:PART_OF]->(doc:VulnerabilityReport)
             
             WITH entity, chunk, doc,
-                 CASE WHEN 'Document' IN labels(entity) 
-                      THEN entity.fileName 
+                 CASE WHEN 'CVE' IN labels(entity) 
+                      THEN entity.id 
+                      WHEN 'CWE' IN labels(entity)
+                      THEN entity.id
+                      WHEN 'CAPEC' IN labels(entity)
+                      THEN entity.id
+                      WHEN 'Product' IN labels(entity)
+                      THEN entity.name
                       ELSE entity.id 
                  END AS entity_name
                  
-            RETURN "Entity '" + entity_name + "' found in document '" + coalesce(doc.fileName, 'N/A') +
-                   "'. The context of the text is: '" + left(chunk.text, 250) + "...'"
+            RETURN "Entity '" + entity_name + "' found in vulnerability report '" + coalesce(doc.reportId, 'N/A') +
+                   "'. Context: '" + left(chunk.text, 250) + "...'"
                    AS output
             LIMIT 10
             """,

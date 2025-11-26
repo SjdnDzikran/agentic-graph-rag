@@ -206,19 +206,19 @@ def synthesize_node(state: AgentState):
     logger.info("--- Executing Node: [[Synthesizer]] ---")
 
     # Ambil konteks, jika tidak ada atau kosong, gunakan pesan default
-    log_cypher = str(state.get('log_cypher_context')) if state.get('log_cypher_context') else "Not applicable for this query."
-    log_vector = str(state.get('log_vector_context')) if state.get('log_vector_context') else "Not applicable for this query."
+    vuln_cypher = str(state.get('log_cypher_context')) if state.get('log_cypher_context') else "Not applicable for this query."
+    vuln_vector = str(state.get('log_vector_context')) if state.get('log_vector_context') else "Not applicable for this query."
     generated_q = str(state.get('generated_question_for_rdf', "Not applicable for this query."))
 
-    if not state.get('mcp_rdf_context') and log_cypher == "Not applicable for this query." and log_vector == "Not applicable for this query.":
-        final_answer = "Sorry, after several attempts, I could not find any relevant information."
+    if not state.get('mcp_rdf_context') and vuln_cypher == "Not applicable for this query." and vuln_vector == "Not applicable for this query.":
+        final_answer = "Sorry, after several attempts, I could not find any relevant vulnerability information."
     else:
         final_answer = synthesis_chain.invoke({
             "original_question": state['original_question'],
-            "log_cypher_context": log_cypher,
-            "log_vector_context": log_vector,
-            "generated_question_for_rdf": generated_q,
-            "mcp_rdf_context": str(state.get('mcp_rdf_context', "No data was provided from this source.")),
+            "vulnerability_cypher_context": vuln_cypher,           # ← UBAH INI
+            "vulnerability_vector_context": vuln_vector,           # ← UBAH INI
+            "generated_question_for_weakness_kb": generated_q,     # ← UBAH INI
+            "weakness_kb_context": str(state.get('mcp_rdf_context', "No data was provided from this source.")),  # ← UBAH INI
         })
         
     return {"answer": final_answer}
