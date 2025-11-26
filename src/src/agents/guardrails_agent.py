@@ -1,6 +1,6 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
+from langchain_google_genai import ChatGoogleGenerativeAI
 from src.graph.state import GraphState
 
 # 1. Definisikan Struktur Output agar jawabannya pasti (True/False)
@@ -19,8 +19,8 @@ def guardrails_node(state: GraphState):
     print("---GUARDRAILS CHECK---")
     question = state["question"]
 
-    # 2. Setup LLM (Gunakan model yang cepat & murah, misal gpt-3.5-turbo atau gpt-4o-mini)
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    # 2. Setup LLM (Gunakan model yang cepat & murah)
+    llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0)
     
     # 3. Prompt Khusus Vulnerability Assessment
     system_prompt = """You are a strict Guardrails Agent for a Vulnerability Assessment System.
@@ -32,6 +32,8 @@ def guardrails_node(state: GraphState):
     - Prioritizing vulnerabilities (risk assessment, what to fix first).
     - Explaining vulnerabilities (how an exploit works, remediation, patches).
     - General cybersecurity concepts related to defense and analysis.
+    - Asset Inventory (servers, laptops, devices).
+    - Software Versions and Installed Applications.
     
     FORBIDDEN TOPICS (Return is_relevant=False):
     - General conversational chit-chat (e.g., "How are you?", "Weather").
