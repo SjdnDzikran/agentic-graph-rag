@@ -2,7 +2,7 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_neo4j.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain_google_genai import ChatGoogleGenerativeAI
-from src.config.settings import graph, llm
+from src.config.settings import graph
 
 # --- Cypher Generation Prompt Template ---
 cypher_generation_template = """
@@ -11,12 +11,12 @@ You are an expert Neo4j Cypher translator who converts English to Cypher based o
         2. Do not use EXISTS, SIZE, HAVING keywords in the cypher. Use an alias when using the WITH keyword.
         3. Use only Node labels and Relationship types mentioned in the schema.
         4. Do not use relationships that are not mentioned in the given schema.
-        5. For property searches, use case-insensitive matching. E.g., to search for a Asset, use `toLower(a.id) CONTAINS 'search_term'`.
-        6. Assign a meaningful alias to every node and relationship in the MATCH clause (e.g., `MATCH (a:Asset)-[r:HAS_SOFTWARE]->(s:Software)`).
+        5. For property searches, use case-insensitive matching. E.g., to search for a User, use `toLower(u.id) CONTAINS 'search_term'`.
+        6. Assign a meaningful alias to every node and relationship in the MATCH clause (e.g., `MATCH (u:User)-[r:FAILED_LOGIN]->(s:System)`).
         7. In the RETURN clause, include only the components (nodes, relationships, or properties) needed to answer the question.
-        8. To count distinct items from an `OPTIONAL MATCH`, collect them first and then use `size()` on the list to avoid null value warnings.
+        8. To count distinct items from an `OPTIONAL MATCH`, collect them first and then use `size()` on the list to avoid null value warnings (e.g., `WITH main, collect(DISTINCT opt) AS items RETURN size(items) AS itemCount`).
         9. To create unique pairs of nodes for comparison, use `WHERE elementId(node1) < elementId(node2)`.
-        10. **CRITICAL RULE**: When returning the `type()` of a relationship, you MUST give the relationship a variable in the `MATCH` clause.
+        10. **CRITICAL RULE**: When returning the `type()` of a relationship, you MUST give the relationship a variable in the `MATCH` clause. E.g., `MATCH (u:User)-[r:HAS_SESSION]->(s:Server) RETURN type(r)`. Do NOT use `type()` on a relationship without a variable.
 
 Schema:
 {schema}
@@ -28,29 +28,37 @@ Do not run any queries that would add to or delete from the database.
 
 Examples:
 
-1.  Question: What software is installed on Server-Alpha?
+1.  Question: Which users have the most authentication failures?
     Query:
-    MATCH (a:Asset)-[:HAS_SOFTWARE]->(s:Software)
-    WHERE toLower(a.id) = 'server-alpha'
-    RETURN a.id AS Asset, s.name AS Software, s.version AS Version
+    MATCH (u:User)-[:AUTHENTICATION_FAILURE_ON]->()
+    RETURN u.id AS userId, count(*) AS failureCount
+    ORDER BY failureCount DESC
+    LIMIT 10
 
-2.  Question: Which assets have Log4j installed?
+2.  Question: List devices where users opened or closed a session.
     Query:
-    MATCH (a:Asset)-[:HAS_SOFTWARE]->(s:Software)
-    WHERE toLower(s.name) CONTAINS 'log4j'
-    RETURN a.id AS Asset, a.ip AS IP, s.version AS Version
+    MATCH (u:User)-[r:SESSION_OPENED_ON|SESSION_CLOSED_ON]->(device)
+    RETURN u.id AS userId, type(r) AS action, labels(device) AS deviceType, device.id AS deviceId
+    LIMIT 20
 
-3.  Question: List all servers running Windows.
+3.  Question: Tell the full path of the session: from the device where it was opened to where it was closed by root user
     Query:
-    MATCH (a:Asset)
-    WHERE toLower(a.os) CONTAINS 'windows' AND a.type = 'Server'
-    RETURN a.id AS Asset, a.ip AS IP, a.os AS OS
+    MATCH (u:User {{id: "root"}})-[open:SESSION_OPENED_ON]->(startDevice),(u)-[close:SESSION_CLOSED_ON]->(endDevice)
+    RETURN
+        u.id            AS userId,
+        type(open)      AS openedOnRel,
+        labels(startDevice) AS startDeviceType,
+        startDevice.id  AS startDeviceId,
+        type(close)     AS closedOnRel,
+        labels(endDevice)   AS endDeviceType,
+        endDevice.id    AS endDeviceId
+        
+4.  Question: Give me information about daryl's activity?
+    Query:
+    MATCH (u:User)-[r]->(n)
+    WHERE toLower(u.id) = 'daryl'
+    RETURN u.id AS user, type(r) as relationship, n.id as entity
 
-4.  Question: Count how many software packages are on each asset.
-    Query:
-    MATCH (a:Asset)-[:HAS_SOFTWARE]->(s:Software)
-    RETURN a.id AS Asset, count(s) AS SoftwareCount
-    ORDER BY SoftwareCount DESC
 
 The question is:
 {question}
@@ -81,7 +89,12 @@ qa_generation_prompt = PromptTemplate(
 )
 
 # --- Cypher QA Chain and Query Function ---
-# --- Cypher QA Chain and Query Function ---
+gemini_kwargs = {
+    "model": "gemini-2.5-flash",
+    "temperature": 0,
+    "convert_system_message_to_human": True,
+}
+
 cypher_qa_chain = GraphCypherQAChain.from_llm(
     top_k=10,
     graph=graph,
@@ -90,8 +103,8 @@ cypher_qa_chain = GraphCypherQAChain.from_llm(
     return_intermediate_steps=True,
     cypher_prompt=cyper_generation_prompt,
     qa_prompt=qa_generation_prompt,
-    qa_llm=llm,
-    cypher_llm=llm,
+    qa_llm=ChatGoogleGenerativeAI(**gemini_kwargs),
+    cypher_llm=ChatGoogleGenerativeAI(**gemini_kwargs),
     allow_dangerous_requests=True,
     use_function_response=True
 )
