@@ -1,11 +1,7 @@
 import pandas as pd
 import os
 
-# Ambil lokasi file script ini berada
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# NAIK 3 LEVEL (../../../) untuk mencapai root folder dari src/src/baselines/
-# Structure: src/src/baselines/ -> src/src/ -> src/ -> ROOT
 DATASET_PATH = os.path.abspath(os.path.join(BASE_DIR, "../../../data/cve_dataset.csv"))
 
 class CVSSBaseline:
