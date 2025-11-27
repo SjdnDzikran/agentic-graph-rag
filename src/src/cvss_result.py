@@ -16,7 +16,7 @@ def run_comparison():
     # 1. Define Test Cases (CVE IDs to query)
     # Randomly select 10 CVE IDs from the dataset if available
     if not cvss_lookup.df.empty:
-        sample_n = min(10, len(cvss_lookup.df))
+        sample_n = min(30, len(cvss_lookup.df))
         test_cves = cvss_lookup.df['id'].sample(n=sample_n).tolist()
     else:
         # Fallback if dataset is missing
@@ -59,6 +59,7 @@ def run_comparison():
 
     # 2. Create DataFrame & show results
     results_df = pd.DataFrame(results)
+    results_df.index = results_df.index + 1
 
     print("\n--- Evaluation Results ---")
     print(results_df[['cve_id', 'cvss_score', 'severity_calculated']])
