@@ -5,20 +5,26 @@ from src.config.settings import llm
 
 class LogAnalysisOutput(BaseModel):
     """
-    Output model for the log analysis agent
+    Output model for the vulnerability analysis agent
     """
-    decision: Literal["cskg_required", "cskg_not_required"] = Field(description="Checks if epth analysis with cybersecurity knowledge is required")
-    log_summary: str = Field(description="A concise summary of the findings from the log data that answers the original question.")
-    generated_question: str = Field(description="question for a cybersecurity knowledge based on original user's question and provided context (findings on log data).")
+    decision: Literal["weakness_kb_required", "weakness_kb_not_required"] = Field(
+        description="Checks if deeper analysis with weakness and attack pattern knowledge base (CWE/CAPEC) is required for mitigation strategies or attack context"
+    )
+    vulnerability_summary: str = Field(
+        description="A concise summary of the findings from the vulnerability data (CVE, CVSS scores, exploitability, affected products) that answers the original question."
+    )
+    generated_question: str = Field(
+        description="Question for the weakness knowledge base (CWE/CAPEC) based on original user's question and provided vulnerability context (CVE findings) to retrieve mitigation strategies or attack patterns."
+    )
 
 log_analysis_prompt = ChatPromptTemplate.from_messages([
     (
         "system", 
-        """You are a security analyst expert. You have received structured and unstructured data from system logs.
+        """You are a vulnerability assessment expert. You have received structured and unstructured data from vulnerability databases.
         Your tasks are:
-        1.  Summarize the findings from the provided log context to directly answer the user's original question.
-        2.  Based on the user's original question, determine whether it requires further analysis with cybersecurity knowledge base. 
-        3.  return 'cskg_required' if the user's original question requires further analysis with cybersecurity knowledgebase. Return 'cskg_not_required' if it does not. 
+        1.  Summarize the findings from the provided vulnerability context to directly answer the user's original question.
+        2.  Based on the user's original question, determine whether it requires further analysis with weakness and attack pattern knowledge base (CWE/CAPEC). 
+        3.  Return 'weakness_kb_required' if the user's original question requires further analysis with CWE/CAPEC knowledge base for mitigation strategies or attack patterns. Return 'weakness_kb_not_required' if it does not. 
 
         """
     ),
@@ -28,10 +34,10 @@ log_analysis_prompt = ChatPromptTemplate.from_messages([
         Original Question: {original_question}
 
         Context from Vector Search:
-        {log_vector_context}
+        {vulnerability_vector_context}
 
         Context from Cypher Query:
-        {log_cypher_context}
+        {vulnerability_cypher_context}
 
         Based on the provided context, perform your tasks.
         """
