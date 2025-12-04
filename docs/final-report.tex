@@ -19,60 +19,60 @@
 \begin{document}\maketitle
 
 \begin{abstract}
-We adapt the Agentic Graph Retrieval-Augmented Generation (RAG) paradigm to the vulnerability assessment problem by combining local log knowledge graphs, vector retrieval, and the SEPSES cybersecurity knowledge graph. The implemented system orchestrates guardrails, hybrid retrieval (Neo4j Cypher + vector search), Model Context Protocol (MCP)-backed SPARQL querying, reflection, and a structured synthesizer, all coordinated with LangGraph. This report summarizes the design decisions, explains how the architecture operationalizes concepts from AgCyRAG and the SEPSES KG, and presents an evaluation comparing the agentic approach against traditional CVSS scoring.
+Kami mengadaptasi paradigma Agentic Graph Retrieval-Augmented Generation (RAG) untuk masalah penilaian kerentanan dengan menggabungkan local log knowledge graphs, vector retrieval, dan SEPSES cybersecurity knowledge graph. Sistem yang diimplementasikan mengorkestrasi guardrails, hybrid retrieval (Neo4j Cypher + vector search), Model Context Protocol (MCP)-backed SPARQL querying, reflection, dan structured synthesizer, semuanya dikoordinasikan dengan LangGraph. Laporan ini merangkum keputusan desain, menjelaskan bagaimana arsitektur mengoperasionalkan konsep dari AgCyRAG dan SEPSES KG, serta menyajikan evaluasi yang membandingkan pendekatan agentic terhadap traditional CVSS scoring.
 \keywords{Agentic RAG \and Knowledge Graph \and Vulnerability Assessment \and Neo4j \and SEPSES \and LangGraph}
 \end{abstract}
 
-\section{Introduction}
-Agentic Graph RAG (AgCyRAG) demonstrates how orchestrated agents can ground LLM answers in both structured and unstructured cybersecurity knowledge. For vulnerability assessment, we extend this idea to rank and explain vulnerabilities by jointly leveraging (i) local log/attack graphs (Neo4j), (ii) semantic vector retrieval over embeddings, and (iii) the SEPSES RDF knowledge graph that integrates CVE, CVSS, CPE, CWE, and CAPEC. Our implementation provides an executable pipeline that routes questions, retrieves evidence, and synthesizes analyst-grade reports.
+\section{Pendahuluan}
+Agentic Graph RAG (AgCyRAG) mendemonstrasikan bagaimana orchestrated agents dapat mendasarkan jawaban LLM pada structured dan unstructured cybersecurity knowledge. Untuk vulnerability assessment, kami memperluas ide ini untuk memberi peringkat dan menjelaskan kerentanan dengan memanfaatkan secara bersama-sama (i) local log/attack graphs (Neo4j), (ii) semantic vector retrieval over embeddings, dan (iii) SEPSES RDF knowledge graph yang mengintegrasikan CVE, CVSS, CPE, CWE, dan CAPEC. Implementasi kami menyediakan executable pipeline yang mengarahkan pertanyaan, mengambil bukti, dan mensintesis laporan tingkat analis.
 
-\section{Related Work}
-AgCyRAG \cite{paper11} introduces a hybrid agentic RAG workflow for cybersecurity analysis that mixes Cypher, vector search, and SPARQL over cybersecurity KGs. The SEPSES KG \cite{sepses} provides RDF vocabularies and an evolving knowledge base for CVE, CWE, CAPEC, CPE, and CVSS, exposed via SPARQL. Our implementation adopts the AgCyRAG multi-agent pattern and binds it to SEPSES through MCP tools, reusing the established namespaces and querying patterns from SEPSES documentation.
+\section{Penelitian Terkait}
+AgCyRAG \cite{paper11} memperkenalkan hybrid agentic RAG workflow untuk analisis keamanan siber yang menggabungkan Cypher, vector search, dan SPARQL over cybersecurity KGs. SEPSES KG \cite{sepses} menyediakan RDF vocabularies dan evolving knowledge base untuk CVE, CWE, CAPEC, CPE, dan CVSS, yang diekspos melalui SPARQL. Implementasi kami mengadopsi AgCyRAG multi-agent pattern dan mengikatnya ke SEPSES melalui MCP tools, menggunakan kembali established namespaces dan querying patterns dari dokumentasi SEPSES.
 
-\section{Proposed Approach}
-\subsection{Method/Framework}
-The system is a LangGraph state machine that routes and iterates over specialized agents:
+\section{Pendekatan yang Diusulkan}
+\subsection{Metode/Framework}
+Sistem ini adalah LangGraph state machine yang mengarahkan dan mengiterasi specialized agents:
 \begin{itemize}
-    \item \textbf{Guardrails \& Router}: Filters off-topic queries and routes between log-centric analysis and direct cyber-knowledge lookup.
-    \item \textbf{Vector Agent}: Extracts entities with Gemini, runs Neo4j full-text search over entity indexes, and performs hybrid vector retrieval through a Neo4j vector index built with \texttt{all-MiniLM-L6-v2} embeddings.
-    \item \textbf{Cypher Agent}: Uses \texttt{GraphCypherQAChain} to translate natural language to Cypher against the live Neo4j schema, returning both the generated query and the retrieved context.
-    \item \textbf{Reflection \& Review}: Judges sufficiency of retrieved context, rephrases questions, and retries up to configurable limits.
-    \item \textbf{Log Analysis Agent}: Summarizes log-derived evidence and decides whether external cybersecurity knowledge is needed; it can generate a refined question for RDF lookup.
-    \item \textbf{MCP RDF Agent}: Invokes SEPSES SPARQL tools via MCP with a strict system prompt that forbids hallucination and forces evidence-backed answers.
-    \item \textbf{Synthesizer}: Produces a structured report with original question, contexts from all sources, analytic linkage, and a final answer.
+    \item \textbf{Guardrails \& Router}: Menyaring query di luar topik dan mengarahkan antara log-centric analysis dan direct cyber-knowledge lookup.
+    \item \textbf{Vector Agent}: Mengekstrak entities dengan Gemini, menjalankan Neo4j full-text search over entity indexes, dan melakukan hybrid vector retrieval melalui Neo4j vector index yang dibangun dengan \texttt{all-MiniLM-L6-v2} embeddings.
+    \item \textbf{Cypher Agent}: Menggunakan \texttt{GraphCypherQAChain} untuk menerjemahkan natural language ke Cypher terhadap live Neo4j schema, mengembalikan generated query dan retrieved context.
+    \item \textbf{Reflection \& Review}: Menilai kecukupan retrieved context, me-rephrase pertanyaan, dan mencoba ulang hingga batas yang dapat dikonfigurasi.
+    \item \textbf{Log Analysis Agent}: Merangkum log-derived evidence dan memutuskan apakah external cybersecurity knowledge diperlukan; dapat menghasilkan refined question untuk RDF lookup.
+    \item \textbf{MCP RDF Agent}: Memanggil SEPSES SPARQL tools melalui MCP dengan strict system prompt yang melarang hallucination dan memaksa evidence-backed answers.
+    \item \textbf{Synthesizer}: Menghasilkan structured report dengan pertanyaan asli, contexts dari semua sumber, analytic linkage, dan jawaban akhir.
 \end{itemize}
 
-\subsection{Data and Knowledge Graphs}
-Local data live in Neo4j (LPG) with vector and keyword indexes; embeddings come from HuggingFace \texttt{all-MiniLM-L6-v2}. External knowledge is pulled from the SEPSES SPARQL endpoint (\texttt{https://w3id.org/sepses/sparql}) via MCP. The configuration system manages environment variables for Neo4j, Gemini API, and LangChain tracing, and provides the live Neo4j schema for agent prompting.
+\subsection{Data dan Knowledge Graphs}
+Data lokal berada di Neo4j (LPG) dengan vector dan keyword indexes; embeddings berasal dari HuggingFace \texttt{all-MiniLM-L6-v2}. External knowledge diambil dari SEPSES SPARQL endpoint (\texttt{https://w3id.org/sepses/sparql}) melalui MCP. Configuration system mengelola environment variables untuk Neo4j, Gemini API, dan LangChain tracing, serta menyediakan live Neo4j schema untuk agent prompting.
 
-\section{Implementation}
+\section{Implementasi}
 \subsection{Execution Flow}
-The main execution flow seeds the LangGraph state with the user question and iteration counters, then invokes the workflow. The workflow branches after guardrails: log-related questions go through vector and Cypher agents, while general cyber-knowledge questions can directly trigger the MCP RDF agent. Reflection loops keep track of the latest usable context even when retries are exhausted. A comprehensive logging system streams and persists execution traces for debugging and analysis.
+Main execution flow menyemai LangGraph state dengan user question dan iteration counters, kemudian memanggil workflow. Workflow bercabang setelah guardrails: pertanyaan terkait log melalui vector dan Cypher agents, sedangkan pertanyaan cyber-knowledge umum dapat langsung memicu MCP RDF agent. Reflection loops melacak latest usable context bahkan ketika retries habis. Comprehensive logging system melakukan streaming dan persistensi execution traces untuk debugging dan analisis.
 
-\subsection{Agent Details}
+\subsection{Detail Agent}
 \begin{itemize}
-    \item \textbf{Vector Retrieval}: Combines entity-aware full-text search with hybrid vector similarity over chunk nodes, enabling both symbolic and semantic matching.
-    \item \textbf{Cypher QA}: Enforces Neo4j~5-compatible queries, avoids unsupported constructs, and uses deterministic Gemini models for generation and QA.
-    \item \textbf{MCP Integration}: Automatically loads the MCP configuration, disables anonymized telemetry, and caps tool-calling to 30 steps per query for controllability.
-    \item \textbf{Structured Synthesis}: The final template requires explicit sections for each evidence source, encouraging traceability and analyst-style justification.
+    \item \textbf{Vector Retrieval}: Menggabungkan entity-aware full-text search dengan hybrid vector similarity over chunk nodes, memungkinkan symbolic dan semantic matching.
+    \item \textbf{Cypher QA}: Menegakkan Neo4j~5-compatible queries, menghindari unsupported constructs, dan menggunakan deterministic Gemini models untuk generation dan QA.
+    \item \textbf{MCP Integration}: Secara otomatis memuat MCP configuration, menonaktifkan anonymized telemetry, dan membatasi tool-calling hingga 30 langkah per query untuk controlability.
+    \item \textbf{Structured Synthesis}: Final template memerlukan explicit sections untuk setiap evidence source, mendorong traceability dan analyst-style justification.
 \end{itemize}
 
-\subsection{System Requirements}
-Dependencies are managed with \texttt{uv}; the system requires a running Neo4j instance populated with log or vulnerability data and a valid Gemini API key. The SEPSES MCP server is bundled with the implementation and configured to use the public SEPSES endpoint. Sample ingestion commands and query examples are documented in the project repository.
+\subsection{Kebutuhan Sistem}
+Dependencies dikelola dengan \texttt{uv}; sistem memerlukan Neo4j instance yang berjalan dan terisi dengan log atau vulnerability data serta valid Gemini API key. SEPSES MCP server dibundel dengan implementasi dan dikonfigurasi untuk menggunakan public SEPSES endpoint. Sample ingestion commands dan query examples didokumentasikan dalam project repository.
 
-\section{Use-Cases Applications}
+\section{Aplikasi Use-Cases}
 \begin{enumerate}
-    \item \textbf{High-severity CVE triage}: A question like ``List recent CVEs with CVSS $\geq$ 9 for Windows'' routes through guardrails to the MCP RDF agent, which invokes appropriate SPARQL templates to return CVE identifiers, descriptions, and scores from the SEPSES knowledge graph.
-    \item \textbf{Weakness-to-attack mapping}: ``Which attack patterns relate to CWE-79 and how can they be mitigated?'' triggers SEPSES CAPEC/CWE lookups via MCP, producing linked CAPEC techniques and suggested mitigations for downstream synthesis.
-    \item \textbf{Log-to-threat linkage}: ``Investigate repeated authentication failures on host mail-0'' flows through vector and Cypher agents to surface log context, then the log analysis agent decides whether to enrich with SEPSES (e.g., mapping to brute-force techniques) before synthesis.
+    \item \textbf{High-severity CVE triage}: Pertanyaan seperti ``List recent CVEs with CVSS $\geq$ 9 for Windows'' diarahkan melalui guardrails ke MCP RDF agent, yang memanggil SPARQL templates yang sesuai untuk mengembalikan CVE identifiers, descriptions, dan scores dari SEPSES knowledge graph.
+    \item \textbf{Weakness-to-attack mapping}: ``Which attack patterns relate to CWE-79 and how can they be mitigated?'' memicu SEPSES CAPEC/CWE lookups melalui MCP, menghasilkan linked CAPEC techniques dan suggested mitigations untuk downstream synthesis.
+    \item \textbf{Log-to-threat linkage}: ``Investigate repeated authentication failures on host mail-0'' mengalir melalui vector dan Cypher agents untuk memunculkan log context, kemudian log analysis agent memutuskan apakah akan memperkaya dengan SEPSES (misalnya, mapping ke brute-force techniques) sebelum synthesis.
 \end{enumerate}
 
-\section{Evaluation \& Discussion}
-\subsection{Experimental Setup}
-We evaluated the system on three dimensions: (i)~CVSS scoring accuracy against ground-truth assessments, (ii)~ranking consistency for vulnerability prioritization, and (iii)~qualitative analysis of the multi-agent orchestration. The test suite consisted of three CVE cases spanning different severity levels and CVSS versions. Traditional CVSS scores were obtained from official NVD records, while Agentic Graph RAG scores were generated by the synthesizer agent after retrieving context from Neo4j and SEPSES.
+\section{Evaluasi \& Diskusi}
+\subsection{Setup Eksperimen}
+Kami mengevaluasi sistem pada tiga dimensi: (i)~akurasi CVSS scoring terhadap ground-truth assessments, (ii)~konsistensi ranking untuk vulnerability prioritization, dan (iii)~qualitative analysis dari multi-agent orchestration. Test suite terdiri dari tiga CVE cases yang mencakup severity levels dan CVSS versions yang berbeda. Traditional CVSS scores diperoleh dari official NVD records, sementara Agentic Graph RAG scores dihasilkan oleh synthesizer agent setelah mengambil context dari Neo4j dan SEPSES.
 
-\subsection{CVSS Scoring Comparison}
-Table~\ref{tab:cvss-score-comparison} presents the quantitative comparison between Agentic Graph RAG and traditional CVSS scoring. The comparisons were assembled by invoking the full agentic pipeline and extracting scores from synthesis outputs, then comparing against official NVD assessments.
+\subsection{Perbandingan CVSS Scoring}
+Tabel~\ref{tab:cvss-score-comparison} menyajikan perbandingan kuantitatif antara Agentic Graph RAG dan traditional CVSS scoring. Perbandingan disusun dengan memanggil full agentic pipeline dan mengekstrak scores dari synthesis outputs, kemudian membandingkannya dengan official NVD assessments.
 
 \begin{table}[ht]
 \centering
@@ -133,42 +133,42 @@ Table~\ref{tab:cvss-score-comparison} presents the quantitative comparison betwe
 \legend{Agentic Graph RAG, Traditional CVSS}
 \end{axis}
 \end{tikzpicture}
-\caption{CVSS score comparison across three test cases. Test case 1 shows severe underestimation (4.3 vs 10.0) due to version mismatch, test case 2 shows slight overestimation (9.8 vs 8.7), and test case 3 achieves perfect alignment (9.8 vs 9.8).}
+\caption{Perbandingan CVSS score untuk tiga test cases. Test case 1 menunjukkan underestimation parah (4.3 vs 10.0) karena version mismatch, test case 2 menunjukkan slight overestimation (9.8 vs 8.7), dan test case 3 mencapai perfect alignment (9.8 vs 9.8).}
 \label{fig:score-comparison}
 \end{figure}
 
-\subsection{Analysis of Results}
-The results reveal both promise and challenges when comparing Agentic Graph RAG against traditional CVSS scoring. Test case~3 achieved perfect score alignment (9.8 vs.\ 9.8), demonstrating that when SEPSES provides complete CVSS metrics and the LLM correctly interprets them, the agentic pipeline can reproduce official assessments. However, test case~1 exhibited a severe underestimation (4.3 vs.\ 10.0) due to CVSS version confusion: the agentic system retrieved V2 metrics while the traditional scoring used V3.1, and the LLM failed to normalize or flag the mismatch. Test case~2 showed moderate accuracy (9.8 vs.\ 8.7) with the agentic score slightly inflated, likely because vector-retrieved context emphasized exploit availability without balancing scope limitations.
+\subsection{Analisis Hasil}
+Hasil mengungkapkan baik prospek maupun tantangan ketika membandingkan Agentic Graph RAG dengan traditional CVSS scoring. Test case~3 mencapai perfect score alignment (9.8 vs.\ 9.8), mendemonstrasikan bahwa ketika SEPSES menyediakan complete CVSS metrics dan LLM menginterpretasikannya dengan benar, agentic pipeline dapat mereproduksi official assessments. Namun, test case~1 menunjukkan severe underestimation (4.3 vs.\ 10.0) karena CVSS version confusion: agentic system mengambil V2 metrics sementara traditional scoring menggunakan V3.1, dan LLM gagal menormalkan atau menandai mismatch tersebut. Test case~2 menunjukkan moderate accuracy (9.8 vs.\ 8.7) dengan agentic score sedikit inflated, kemungkinan karena vector-retrieved context menekankan exploit availability tanpa menyeimbangkan scope limitations.
 
-The ranking inconsistency in Table~\ref{tab:ranking-consistency} is particularly concerning for operational deployment. An analyst prioritizing by Agentic Graph RAG scores would address \textit{coba~2} and \textit{coba~3} before \textit{coba~1}, inverting the true severity order established by traditional CVSS scoring. This underscores two failure modes: (i)~retrieval gaps when SEPSES lacks complete CVSS V3.1 breakdowns, and (ii)~LLM reasoning errors in aggregating partial metrics. The reflection agent did not catch these errors because it evaluates \textit{sufficiency} of context rather than \textit{correctness} of derived scores.
+Ranking inconsistency dalam Tabel~\ref{tab:ranking-consistency} sangat mengkhawatirkan untuk operational deployment. Seorang analis yang memprioritaskan berdasarkan Agentic Graph RAG scores akan menangani \textit{coba~2} dan \textit{coba~3} sebelum \textit{coba~1}, membalikkan true severity order yang ditetapkan oleh traditional CVSS scoring. Ini menggarisbawahi dua failure modes: (i)~retrieval gaps ketika SEPSES kekurangan complete CVSS V3.1 breakdowns, dan (ii)~LLM reasoning errors dalam aggregating partial metrics. Reflection agent tidak menangkap errors ini karena mengevaluasi \textit{sufficiency} context daripada \textit{correctness} derived scores.
 
-\subsection{Strengths of the Agentic Approach}
-Despite scoring inconsistencies, the multi-agent orchestration offers significant advantages over traditional CVSS scoring:
+\subsection{Kelebihan Pendekatan Agentic}
+Meskipun terdapat inconsistencies dalam scoring, multi-agent orchestration menawarkan keuntungan signifikan dibandingkan traditional CVSS scoring:
 \begin{itemize}
-    \item \textbf{Explainability}: Unlike traditional CVSS calculators that output numeric scores, the synthesizer produces structured justifications citing specific Cypher results, vector-matched chunks, and SPARQL bindings, enabling analysts to audit the reasoning chain and understand \textit{why} a vulnerability received its score.
-    \item \textbf{Adaptive retrieval}: The reflection loop allows retries with rephrased queries when initial Cypher or SPARQL calls return empty results, improving robustness to phrasing variations—traditional scoring requires manual metric selection.
-    \item \textbf{Knowledge fusion}: Combining local logs (Neo4j LPG) with global cybersecurity semantics (SEPSES RDF) surfaces connections invisible to traditional scoring—e.g., linking a log anomaly to a CWE weakness and then to CAPEC attack patterns automatically.
-    \item \textbf{Contextual enrichment}: Traditional CVSS scores are static snapshots; the agentic system can incorporate real-time log evidence and organizational context to adjust prioritization dynamically.
+    \item \textbf{Explainability}: Tidak seperti traditional CVSS calculators yang menghasilkan numeric scores, synthesizer menghasilkan structured justifications yang mengutip specific Cypher results, vector-matched chunks, dan SPARQL bindings, memungkinkan analis untuk audit reasoning chain dan memahami \textit{mengapa} sebuah kerentanan menerima scorenya.
+    \item \textbf{Adaptive retrieval}: Reflection loop memungkinkan retries dengan rephrased queries ketika initial Cypher atau SPARQL calls mengembalikan empty results, meningkatkan robustness terhadap phrasing variations—traditional scoring memerlukan manual metric selection.
+    \item \textbf{Knowledge fusion}: Menggabungkan local logs (Neo4j LPG) dengan global cybersecurity semantics (SEPSES RDF) memunculkan connections yang tidak terlihat oleh traditional scoring—misalnya, menghubungkan log anomaly ke CWE weakness dan kemudian ke CAPEC attack patterns secara otomatis.
+    \item \textbf{Contextual enrichment}: Traditional CVSS scores adalah static snapshots; agentic system dapat menggabungkan real-time log evidence dan organizational context untuk menyesuaikan prioritization secara dinamis.
 \end{itemize}
 
-\subsection{Limitations and Error Analysis}
-Key limitations include:
+\subsection{Keterbatasan dan Analisis Error}
+Keterbatasan kunci meliputi:
 \begin{itemize}
-    \item \textbf{CVSS version heterogeneity}: SEPSES contains mixed V2/V3.0/V3.1 scores; the current prompt does not instruct the LLM to harmonize versions or prefer the latest standard.
-    \item \textbf{Incomplete RDF coverage}: Not all CVEs in SEPSES have detailed metric breakdowns (AV, AC, PR, etc.), forcing the LLM to guess or fall back to base scores without justification.
-    \item \textbf{LLM calibration}: Gemini models occasionally overfit to keyword presence (e.g., ``remote'' $\to$ high impact) without verifying the full attack vector chain.
-    \item \textbf{Lack of ground-truth validation loop}: The review agent checks context sufficiency but does not compare synthesized scores against known NVD values during inference, missing an opportunity for self-correction.
+    \item \textbf{CVSS version heterogeneity}: SEPSES mengandung mixed V2/V3.0/V3.1 scores; current prompt tidak menginstruksikan LLM untuk harmonize versions atau prefer latest standard.
+    \item \textbf{Incomplete RDF coverage}: Tidak semua CVEs dalam SEPSES memiliki detailed metric breakdowns (AV, AC, PR, dll.), memaksa LLM untuk guess atau fall back ke base scores tanpa justification.
+    \item \textbf{LLM calibration}: Gemini models kadang-kadang overfit terhadap keyword presence (misalnya, ``remote'' $\to$ high impact) tanpa memverifikasi full attack vector chain.
+    \item \textbf{Lack of ground-truth validation loop}: Review agent memeriksa context sufficiency tetapi tidak membandingkan synthesized scores terhadap known NVD values selama inference, melewatkan opportunity untuk self-correction.
 \end{itemize}
 
 \subsection{Trade-offs: Agentic Graph RAG vs. Traditional CVSS}
-Traditional CVSS scoring excels at consistency and standardization—trained analysts apply the same metrics to produce comparable scores across organizations. However, it suffers from three limitations our agentic approach addresses: (i)~lack of contextual adaptation (a remotely exploitable vulnerability may be low-risk in an air-gapped network), (ii)~no automatic evidence linking (analysts must manually correlate CVEs with CWE/CAPEC), and (iii)~opaque justification (the final score does not explain which retrieved knowledge influenced the assessment).
+Traditional CVSS scoring unggul dalam consistency dan standardization—trained analysts menerapkan metrics yang sama untuk menghasilkan comparable scores across organizations. Namun, ini menderita tiga keterbatasan yang diatasi oleh agentic approach kami: (i)~lack of contextual adaptation (remotely exploitable vulnerability mungkin low-risk dalam air-gapped network), (ii)~no automatic evidence linking (analis harus manually correlate CVEs dengan CWE/CAPEC), dan (iii)~opaque justification (final score tidak menjelaskan retrieved knowledge mana yang mempengaruhi assessment).
 
-Conversely, the Agentic Graph RAG system introduces complexity—multiple retrieval stages, LLM reasoning errors, and dependency on KG completeness. The version-mismatch failure in test case~1 would not occur with manual CVSS assessment, where the analyst explicitly selects V3.1 metrics. The key trade-off is \textit{automation with rich context} versus \textit{manual precision with standardized protocols}. For high-stakes decisions, traditional scoring remains the gold standard; for rapid triage and exploratory analysis, the agentic approach provides valuable enrichment.
+Sebaliknya, Agentic Graph RAG system memperkenalkan complexity—multiple retrieval stages, LLM reasoning errors, dan dependency pada KG completeness. Version-mismatch failure dalam test case~1 tidak akan terjadi dengan manual CVSS assessment, di mana analis explicitly memilih V3.1 metrics. Key trade-off adalah \textit{automation with rich context} versus \textit{manual precision with standardized protocols}. Untuk high-stakes decisions, traditional scoring tetap gold standard; untuk rapid triage dan exploratory analysis, agentic approach menyediakan valuable enrichment.
 
-\section{Conclusion}
-This work re-implements the Agentic Graph RAG approach for vulnerability assessment by integrating guardrailed routing, hybrid Neo4j retrieval, MCP-driven SPARQL over SEPSES, and structured synthesis through a LangGraph workflow. The evaluation across three CVE test cases shows mixed results when compared to traditional CVSS scoring: test case~3 achieved perfect alignment (9.8 vs.\ 9.8), test case~2 showed moderate accuracy with slight overestimation (9.8 vs.\ 8.7), and test case~1 exhibited severe underestimation (4.3 vs.\ 10.0) due to CVSS version confusion between V2 and V3.1 metrics.
+\section{Kesimpulan}
+Pekerjaan ini mengimplementasikan ulang Agentic Graph RAG approach untuk vulnerability assessment dengan mengintegrasikan guardrailed routing, hybrid Neo4j retrieval, MCP-driven SPARQL over SEPSES, dan structured synthesis melalui LangGraph workflow. Evaluasi pada tiga CVE test cases menunjukkan hasil mixed ketika dibandingkan dengan traditional CVSS scoring: test case~3 mencapai perfect alignment (9.8 vs.\ 9.8), test case~2 menunjukkan moderate accuracy dengan slight overestimation (9.8 vs.\ 8.7), dan test case~1 menunjukkan severe underestimation (4.3 vs.\ 10.0) karena CVSS version confusion antara V2 dan V3.1 metrics.
 
-The ranking analysis reveals inconsistencies that would affect operational vulnerability prioritization, with the agentic system incorrectly ranking test cases 2 and 3 as most severe instead of test case~1. Despite these scoring inconsistencies, the system demonstrates advantages in explainability and knowledge fusion by automatically linking vulnerabilities across Neo4j logs and SEPSES knowledge graphs. The main limitations stem from CVSS version heterogeneity in SEPSES, incomplete RDF coverage for detailed metrics, and LLM reasoning errors that the reflection agent cannot catch since it evaluates context sufficiency rather than scoring correctness.
+Ranking analysis mengungkapkan inconsistencies yang akan mempengaruhi operational vulnerability prioritization, dengan agentic system incorrectly ranking test cases 2 dan 3 sebagai most severe instead of test case~1. Meskipun terdapat scoring inconsistencies ini, sistem mendemonstrasikan advantages dalam explainability dan knowledge fusion dengan automatically menghubungkan vulnerabilities across Neo4j logs dan SEPSES knowledge graphs. Keterbatasan utama berasal dari CVSS version heterogeneity dalam SEPSES, incomplete RDF coverage untuk detailed metrics, dan LLM reasoning errors yang tidak dapat ditangkap oleh reflection agent karena mengevaluasi context sufficiency daripada scoring correctness.
 
 \begin{thebibliography}{8}
 \bibitem{paper11}
