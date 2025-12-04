@@ -42,60 +42,6 @@ The system is a LangGraph state machine that routes and iterates over specialize
     \item \textbf{Synthesizer}: Produces a structured report with original question, contexts from all sources, analytic linkage, and a final answer.
 \end{itemize}
 
-\begin{figure}[ht]
-\centering
-\begin{tikzpicture}[node distance=1.2cm and 0.8cm,
-    agent/.style={rectangle, draw, fill=blue!10, text width=2.2cm, align=center, minimum height=0.8cm, font=\small},
-    data/.style={cylinder, draw, fill=green!10, shape border rotate=90, aspect=0.25, text width=1.5cm, align=center, minimum height=0.7cm, font=\scriptsize},
-    flow/.style={->, >=stealth, thick}]
-    
-    % Input
-    \node[agent] (input) {User Question};
-    
-    % Guardrails
-    \node[agent, below=of input] (guard) {Guardrails \& Router};
-    
-    % Left path - Log Analysis
-    \node[agent, below left=1.5cm and 1.5cm of guard] (vector) {Vector Agent};
-    \node[agent, below=of vector] (cypher) {Cypher Agent};
-    \node[agent, below=of cypher] (loganalysis) {Log Analysis};
-    
-    % Right path - Direct KB
-    \node[agent, below right=1.5cm and 1.5cm of guard] (mcprdf) {MCP RDF Agent};
-    
-    % Reflection loop
-    \node[agent, below=2cm of guard] (reflection) {Reflection \& Review};
-    
-    % Synthesis
-    \node[agent, below=3.5cm of reflection] (synth) {Synthesizer};
-    
-    % Data sources
-    \node[data, left=2cm of vector] (neo4j) {Neo4j Graph};
-    \node[data, right=2cm of mcprdf] (sepses) {SEPSES KG};
-    
-    % Output
-    \node[agent, below=of synth] (output) {Final Report};
-    
-    % Flows
-    \draw[flow] (input) -- (guard);
-    \draw[flow] (guard) -| node[near start, left] {log query} (vector);
-    \draw[flow] (guard) -| node[near start, right] {KB query} (mcprdf);
-    \draw[flow] (vector) -- (cypher);
-    \draw[flow] (cypher) -- (loganalysis);
-    \draw[flow] (loganalysis) -- (synth);
-    \draw[flow] (mcprdf) |- (synth);
-    \draw[flow] (neo4j) -- (vector);
-    \draw[flow] (neo4j) -- (cypher);
-    \draw[flow] (sepses) -- (mcprdf);
-    \draw[flow] (reflection) -- node[right] {retry} (guard);
-    \draw[flow] (loganalysis) -| (reflection);
-    \draw[flow] (mcprdf) |- (reflection);
-    \draw[flow] (synth) -- (output);
-\end{tikzpicture}
-\caption{System architecture showing multi-agent workflow with LangGraph orchestration. Questions route through guardrails to either log-analysis path (Vector→Cypher→Log Analysis) or direct knowledge-base lookup (MCP RDF). Reflection loops enable retry with rephrased queries.}
-\label{fig:architecture}
-\end{figure}
-
 \subsection{Data and Knowledge Graphs}
 Local data live in Neo4j (LPG) with vector and keyword indexes; embeddings come from HuggingFace \texttt{all-MiniLM-L6-v2}. External knowledge is pulled from the SEPSES SPARQL endpoint (\texttt{https://w3id.org/sepses/sparql}) via MCP. The configuration system manages environment variables for Neo4j, Gemini API, and LangChain tracing, and provides the live Neo4j schema for agent prompting.
 
