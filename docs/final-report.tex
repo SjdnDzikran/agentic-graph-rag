@@ -1,0 +1,124 @@
+\documentclass[runningheads]{llncs}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{makecell}
+
+\title{Re-implementing Agentic Graph RAG for Vulnerability Assessment}
+\author{Muhamad Hafiz Saputra \and Syafran Abdillah Erdin \and Dzikran Azka Sajidan \and Tegar Prasetyo \and Vincentius Davin Febrillianagata}
+\authorrunning{Saputra et al.}
+\institute{Universitas Gadjah Mada, Yogyakarta, Indonesia\\ \email{\{hafiz.saputra,syafran.erdin, dzikranazkasajidan, prasetyo.tegar, vincdav\}@mail.ugm.ac.id}}
+
+\begin{document}\maketitle
+
+\begin{abstract}
+We adapt the Agentic Graph Retrieval-Augmented Generation (RAG) paradigm to the vulnerability assessment problem by combining local log knowledge graphs, vector retrieval, and the SEPSES cybersecurity knowledge graph. The implemented system (\texttt{src/run.py}) orchestrates guardrails, hybrid retrieval (Neo4j Cypher + vector search), Model Context Protocol (MCP)-backed SPARQL querying, reflection, and a structured synthesizer, all coordinated with LangGraph. This report summarizes the design decisions taken from the codebase, explains how the architecture operationalizes concepts from AgCyRAG and the SEPSES KG, and outlines evaluation paths against Normal RAG and CVSS scoring.
+\keywords{Agentic RAG \and Knowledge Graph \and Vulnerability Assessment \and Neo4j \and SEPSES \and LangGraph}
+\end{abstract}
+
+\section{Introduction}
+Agentic Graph RAG (AgCyRAG) demonstrates how orchestrated agents can ground LLM answers in both structured and unstructured cybersecurity knowledge. For vulnerability assessment, we extend this idea to rank and explain vulnerabilities by jointly leveraging (i) local log/attack graphs (Neo4j), (ii) semantic vector retrieval over embeddings, and (iii) the SEPSES RDF knowledge graph that integrates CVE, CVSS, CPE, CWE, and CAPEC. The code in \texttt{src/} implements an executable pipeline that routes questions, retrieves evidence, and synthesizes analyst-grade reports. This document follows the structure requested in \texttt{docs/report-task.tex} and reflects the current repository state.
+
+\section{Related Work}
+AgCyRAG \cite{paper11} introduces a hybrid agentic RAG workflow for cybersecurity analysis that mixes Cypher, vector search, and SPARQL over cybersecurity KGs. The SEPSES KG \cite{sepses} provides RDF vocabularies and an evolving knowledge base for CVE, CWE, CAPEC, CPE, and CVSS, exposed via SPARQL. Our implementation adopts the AgCyRAG multi-agent pattern and binds it to SEPSES through MCP tools, reusing the namespaces and querying patterns documented in \texttt{docs/978-3-030-30796-7\_13.md} and \texttt{query-examples.md}.
+
+\section{Proposed Approach}
+\subsection{Method/Framework}
+The system is a LangGraph state machine (\texttt{src/graph/workflow.py}) that routes and iterates over specialized agents:
+\begin{itemize}
+    \item \textbf{Guardrails \& Router} (\texttt{agents/guardrails\_agent.py}): Filters off-topic queries and routes between log-centric analysis and direct cyber-knowledge lookup.
+    \item \textbf{Vector Agent} (\texttt{agents/vector\_agent.py}): Extracts entities with Gemini, runs Neo4j full-text search over \texttt{entities} index, and performs hybrid vector retrieval through a Neo4j vector index built with \texttt{all-MiniLM-L6-v2} embeddings.
+    \item \textbf{Cypher Agent} (\texttt{agents/cypher\_agent.py}): Uses \texttt{GraphCypherQAChain} to translate natural language to Cypher against the live Neo4j schema, returning both the generated query and the retrieved context.
+    \item \textbf{Reflection \& Review} (\texttt{agents/reflection\_agent.py}, \texttt{agents/review\_agent.py}): Judges sufficiency of retrieved context, rephrases questions, and retries up to configurable limits.
+    \item \textbf{Log Analysis Agent} (\texttt{agents/log\_analysis\_agent.py}): Summarizes log-derived evidence and decides whether external cybersecurity knowledge is needed; it can generate a refined question for RDF lookup.
+    \item \textbf{MCP RDF Agent} (\texttt{agents/mcp\_rdf\_agent.py}): Invokes SEPSES SPARQL tools via MCP with a strict system prompt that forbids hallucination and forces evidence-backed answers.
+    \item \textbf{Synthesizer} (\texttt{agents/synthesizer\_agent.py}): Produces a structured report with original question, contexts from all sources, analytic linkage, and a final answer.
+\end{itemize}
+
+\subsection{Data and Knowledge Graphs}
+Local data live in Neo4j (LPG) with vector and keyword indexes; embeddings come from HuggingFace \texttt{all-MiniLM-L6-v2}. External knowledge is pulled from the SEPSES SPARQL endpoint (\texttt{https://w3id.org/sepses/sparql}) via MCP. The configuration loader (\texttt{config/settings.py}) wires environment variables for Neo4j, Gemini API, and LangChain tracing, and escapes the live Neo4j schema for prompting.
+
+\section{Implementation}
+\subsection{Execution Flow}
+\texttt{src/run.py} seeds the LangGraph state with the user question and iteration counters, then calls \texttt{app.ainvoke}. The workflow branches after guardrails: log-related questions go through vector and Cypher agents, while general cyber-knowledge questions can directly trigger the MCP RDF agent. Reflection loops keep track of the latest usable context even when retries are exhausted. Logging is configured in \texttt{utils/logging\_config.py} to stream and persist traces to \texttt{log/multi\_agent\_cykg.log}.
+
+\subsection{Agent Details}
+\begin{itemize}
+    \item \textbf{Vector Retrieval}: Combines entity-aware full-text search with hybrid vector similarity over \texttt{Chunk} nodes, enabling both symbolic and semantic matching.
+    \item \textbf{Cypher QA}: Enforces Neo4j~5-compatible queries, avoids unsupported constructs, and uses deterministic Gemini models for generation and QA.
+    \item \textbf{MCP Integration}: Loads \texttt{browser\_mcp.json} automatically, disables anonymized telemetry, and caps tool-calling to 30 steps per query for controllability.
+    \item \textbf{Structured Synthesis}: The final template requires explicit sections for each evidence source, encouraging traceability and analyst-style justification.
+\end{itemize}
+
+\subsection{Deployment Notes}
+Dependencies are managed with \texttt{uv}; the system requires a running Neo4j instance populated with log or vulnerability data and a valid Gemini API key. The SEPSES MCP server is bundled in \texttt{src/mcp-cskg-rdf}; the root-level \texttt{browser\_mcp.json} starts it with the public SEPSES endpoint. Sample ingestion commands and query examples are documented in \texttt{src/README.md} and \texttt{query-examples.md}.
+
+\section{Use-Cases Applications}
+\begin{enumerate}
+    \item \textbf{High-severity CVE triage}: A question like ``List recent CVEs with CVSS $\geq$ 9 for Windows'' routes through guardrails to the MCP RDF agent, which can invoke SPARQL templates similar to Query~3/6 in \texttt{query-examples.md} to return CVE identifiers, descriptions, and scores.
+    \item \textbf{Weakness-to-attack mapping}: ``Which attack patterns relate to CWE-79 and how can they be mitigated?'' triggers SEPSES CAPEC/CWE lookups via MCP, producing linked CAPEC techniques and suggested mitigations for downstream synthesis.
+    \item \textbf{Log-to-threat linkage}: ``Investigate repeated authentication failures on host mail-0'' flows through vector and Cypher agents to surface log context, then the log analysis agent decides whether to enrich with SEPSES (e.g., mapping to brute-force techniques) before synthesis.
+\end{enumerate}
+
+\section{Evaluation \& Discussion}
+\subsection{Planned Comparisons}
+We will compare Agentic Graph RAG against (i) Normal RAG without KG (vector-only over vulnerability text) and (ii) traditional CVSS-based ranking. Planned metrics mirror the implementation plan: precision/recall of relevant vulnerabilities, Spearman correlation for ranking alignment, response time per query, and qualitative grounding quality in the synthesized report.
+
+\subsection{Current Status and Gaps}
+The agentic workflow, hybrid retrieval, and MCP integration are implemented; baseline-only RAG and automated CVSS computations are not yet encoded in \texttt{src/}, so comparative experiments require additional scripts. The system depends on live SEPSES availability and Neo4j population; offline dumps or caching are recommended for robustness. Iterative reflection is bounded by \texttt{max\_iterations} to prevent runaway loops but may still incur latency when external endpoints are slow.
+
+\subsection{CVSS Scoring Comparison}
+We compared RAG-produced CVSS scores against traditional CVSS scoring across three test cases. Values below are illustrative; replace with final benchmark outputs when available.
+
+\begin{table}[ht]
+\centering
+\caption{Perbandingan skor RAG CVSS vs skor CVSS tradisional}
+\label{tab:cvss-score-comparison}
+\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{@{}p{1.8cm}p{4cm}p{4cm}p{2.2cm}p{2cm}@{}}
+\toprule
+\textbf{Percobaan} & \textbf{RAG CVSS Score (Vector)} & \textbf{Traditional CVSS Score (Vector)} & \textbf{Akurasi Skor} & \textbf{Ranking} \\
+\midrule
+\textbf{coba 1} & \makecell[l]{4.3 (V2)} & \makecell[l]{10.0 (V3.1)} & Rendah & Tidak Konsisten \\
+\textbf{coba 2} & \makecell[l]{9.8 (V3.1)} & \makecell[l]{8.7 (V3.1)} & Sedang & Tidak Konsisten \\
+\textbf{coba 3} & \makecell[l]{9.8 (V3.0)} & \makecell[l]{9.8 (V3.1)} & Tinggi & Tidak Konsisten \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Konsistensi ranking keparahan}
+\label{tab:ranking-consistency}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Ranking} & \textbf{Berdasarkan Skor Traditional (GT)} & \textbf{Berdasarkan Skor RAG} \\
+\midrule
+\textbf{1 (Paling Parah)} & coba 1 (10.0) & coba 2 dan coba 3 (9.8) \\
+\textbf{2} & coba 3 (9.8) & coba 1 (4.3) \\
+\textbf{3 (Paling Ringan)} & coba 2 (8.7) & -- \\
+\midrule
+\multicolumn{3}{c}{\textbf{Kesimpulan Ranking: Tidak Konsisten}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Conclusion}
+The codebase operationalizes AgCyRAG ideas for vulnerability assessment by combining guardrailed routing, hybrid Neo4j retrieval, MCP-driven SPARQL over SEPSES, and structured synthesis. Extending the current implementation with a vector-only baseline, CVSS calculators, and automated benchmarking will complete the planned evaluation and provide evidence of ranking quality and mitigation guidance effectiveness.
+
+\begin{thebibliography}{8}
+\bibitem{paper11}
+Kurniawan, K., Ardian, R.F., Kiesling, E., Ekelhart, A.: AgCyRAG: An Agentic Knowledge Graph based RAG Framework for Automated Security Analysis. In: RAGE-KG Workshop (2025).
+\bibitem{sepses}
+Kiesling, E., Ekelhart, A., Kurniawan, K., Ekaputra, F.: The SEPSES Knowledge Graph: An Integrated Resource for Cybersecurity. In: ISWC (2019).
+\bibitem{repo}
+Team 7: Agentic Graph RAG for Vulnerability Assessment (Codebase). \url{https://github.com/SjdnDzikran/agentic-graph-rag.git}
+\end{thebibliography}
+
+\end{document}
