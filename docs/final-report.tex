@@ -14,7 +14,7 @@
 \title{Re-implementing Agentic Graph RAG for Vulnerability Assessment}
 \author{Muhamad Hafiz Saputra \and Syafran Abdillah Erdin \and Dzikran Azka Sajidan \and Tegar Prasetyo \and Vincentius Davin Febrillianagata}
 \authorrunning{Saputra et al.}
-\institute{Universitas Gadjah Mada, Yogyakarta, Indonesia\\ \email{\{hafiz.saputra,syafran.erdin, dzikranazkasajidan, prasetyo.tegar, vincdav\}@mail.ugm.ac.id}}
+\institute{Universitas Gadjah Mada, Yogyakarta, Indonesia\\ \email{\{muhamadhafizsaputra, syafranabdillaherdin, dzikranazkasajidan, tegarprasetyo, vincentiusdavinfebrillianagata\}@mail.ugm.ac.id}}
 
 \begin{document}\maketitle
 
@@ -96,9 +96,10 @@ Table~\ref{tab:cvss-score-comparison} presents the quantitative comparison betwe
 \caption{Konsistensi ranking keparahan}
 \label{tab:ranking-consistency}
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{@{}lcc@{}}
+\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{\textwidth}{@{}lYY@{}}
 \toprule
-\textbf{Ranking} & \textbf{Berdasarkan Skor Traditional (GT)} & \textbf{Berdasarkan Skor RAG} \\
+\textbf{Ranking} & \textbf{Traditional CVSS (Ground Truth)} & \textbf{Agentic Graph RAG} \\
 \midrule
 \textbf{1 (Paling Parah)} & coba 1 (10.0) & coba 2 dan coba 3 (9.8) \\
 \textbf{2} & coba 3 (9.8) & coba 1 (4.3) \\
@@ -106,7 +107,7 @@ Table~\ref{tab:cvss-score-comparison} presents the quantitative comparison betwe
 \midrule
 \multicolumn{3}{c}{\textbf{Kesimpulan Ranking: Tidak Konsisten}} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \subsection{Analysis of Results}
