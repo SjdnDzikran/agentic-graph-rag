@@ -12,7 +12,7 @@
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \title{Re-implementing Agentic Graph RAG for Vulnerability Assessment}
-\author{Muhamad Hafiz Saputra \and Syafran Abdillah Erdin \and Dzikran Azka Sajidan \and Tegar Prasetyo \and Vincentius Davin Febrillianagata}
+\author{Muhamad Hafiz Saputra (23/518511/PA/22252) \and Syafran Abdillah Erdin (23/521752/PA/22444) \and Dzikran Azka Sajidan (23/516665/PA/22110) \and Tegar Prasetyo (23/520277/PA/22364) \and Vincentius Davin Febrillianagata (23/520016/PA/22330)}
 \authorrunning{Saputra et al.}
 \institute{Universitas Gadjah Mada, Yogyakarta, Indonesia\\ \email{\{muhamadhafizsaputra, syafranabdillaherdin, dzikranazkasajidan, tegarprasetyo, vincentiusdavinfebrillianagata\}@mail.ugm.ac.id}}
 
@@ -139,7 +139,9 @@ Traditional CVSS scoring excels at consistency and standardization—trained ana
 Conversely, the Agentic Graph RAG system introduces complexity—multiple retrieval stages, LLM reasoning errors, and dependency on KG completeness. The version-mismatch failure in test case~1 would not occur with manual CVSS assessment, where the analyst explicitly selects V3.1 metrics. The key trade-off is \textit{automation with rich context} versus \textit{manual precision with standardized protocols}. For high-stakes decisions, traditional scoring remains the gold standard; for rapid triage and exploratory analysis, the agentic approach provides valuable enrichment.
 
 \section{Conclusion}
-This work operationalizes AgCyRAG ideas for vulnerability assessment by combining guardrailed routing, hybrid Neo4j retrieval, MCP-driven SPARQL over SEPSES, and structured synthesis. The evaluation demonstrates both the promise and challenges of agentic approaches: while the system provides rich explanatory context and knowledge fusion capabilities, it requires careful handling of version mismatches and incomplete knowledge graph coverage to achieve scoring consistency with traditional CVSS methods. Future refinements in validation mechanisms and knowledge base completeness can further improve the system's reliability for operational vulnerability assessment.
+This work re-implements the Agentic Graph RAG approach for vulnerability assessment by integrating guardrailed routing, hybrid Neo4j retrieval, MCP-driven SPARQL over SEPSES, and structured synthesis through a LangGraph workflow. The evaluation across three CVE test cases shows mixed results when compared to traditional CVSS scoring: test case~3 achieved perfect alignment (9.8 vs.\ 9.8), test case~2 showed moderate accuracy with slight overestimation (9.8 vs.\ 8.7), and test case~1 exhibited severe underestimation (4.3 vs.\ 10.0) due to CVSS version confusion between V2 and V3.1 metrics.
+
+The ranking analysis reveals inconsistencies that would affect operational vulnerability prioritization, with the agentic system incorrectly ranking test cases 2 and 3 as most severe instead of test case~1. Despite these scoring inconsistencies, the system demonstrates advantages in explainability and knowledge fusion by automatically linking vulnerabilities across Neo4j logs and SEPSES knowledge graphs. The main limitations stem from CVSS version heterogeneity in SEPSES, incomplete RDF coverage for detailed metrics, and LLM reasoning errors that the reflection agent cannot catch since it evaluates context sufficiency rather than scoring correctness.
 
 \begin{thebibliography}{8}
 \bibitem{paper11}
