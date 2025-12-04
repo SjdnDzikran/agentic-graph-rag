@@ -118,7 +118,7 @@ qa_generation_prompt = PromptTemplate(
 
 # --- Cypher QA Chain and Query Function ---
 gemini_kwargs = {
-    "model": "gemini-2.5-flash",
+    "model": "gemini-2.5-flash-preview-09-2025",
     "temperature": 0,
     "convert_system_message_to_human": True,
 }

@@ -44,7 +44,7 @@ os.environ["LANGCHAIN_ENDPOINT"] = os.environ.get("LANGCHAIN_ENDPOINT", "")
 
 # --- LLM init ---
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
+    model="gemini-2.5-flash-preview-09-2025",
     temperature=0,
     # ensure responses are concise/deterministic for downstream chains
     convert_system_message_to_human=True,
