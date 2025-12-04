@@ -7,6 +7,9 @@
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{makecell}
+\usepackage{array}
+\usepackage{tabularx}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \title{Re-implementing Agentic Graph RAG for Vulnerability Assessment}
 \author{Muhamad Hafiz Saputra \and Syafran Abdillah Erdin \and Dzikran Azka Sajidan \and Tegar Prasetyo \and Vincentius Davin Febrillianagata}
@@ -65,14 +68,8 @@ Dependencies are managed with \texttt{uv}; the system requires a running Neo4j i
 \end{enumerate}
 
 \section{Evaluation \& Discussion}
-\subsection{Planned Comparisons}
-We will compare Agentic Graph RAG against (i) Normal RAG without KG (vector-only over vulnerability text) and (ii) traditional CVSS-based ranking. Planned metrics mirror the implementation plan: precision/recall of relevant vulnerabilities, Spearman correlation for ranking alignment, response time per query, and qualitative grounding quality in the synthesized report.
-
-\subsection{Current Status and Gaps}
-The agentic workflow, hybrid retrieval, and MCP integration are implemented; baseline-only RAG and automated CVSS computations are not yet encoded in \texttt{src/}, so comparative experiments require additional scripts. The system depends on live SEPSES availability and Neo4j population; offline dumps or caching are recommended for robustness. Iterative reflection is bounded by \texttt{max\_iterations} to prevent runaway loops but may still incur latency when external endpoints are slow.
-
 \subsection{CVSS Scoring Comparison}
-We compared RAG-produced CVSS scores against traditional CVSS scoring across three test cases. Values below are illustrative; replace with final benchmark outputs when available.
+We compared RAG-produced CVSS scores against traditional CVSS scoring across three test cases. Values below are illustrative; replace with final benchmark outputs when available. Baseline-only RAG and automated CVSS calculators are not yet scripted in \texttt{src/}, so these comparisons were assembled manually.
 
 \begin{table}[ht]
 \centering
@@ -80,7 +77,7 @@ We compared RAG-produced CVSS scores against traditional CVSS scoring across thr
 \label{tab:cvss-score-comparison}
 \renewcommand{\arraystretch}{1.2}
 \setlength{\tabcolsep}{6pt}
-\begin{tabular}{@{}p{1.8cm}p{4cm}p{4cm}p{2.2cm}p{2cm}@{}}
+\begin{tabularx}{\textwidth}{@{}p{1.8cm}YYp{2.2cm}p{2cm}@{}}
 \toprule
 \textbf{Percobaan} & \textbf{RAG CVSS Score (Vector)} & \textbf{Traditional CVSS Score (Vector)} & \textbf{Akurasi Skor} & \textbf{Ranking} \\
 \midrule
@@ -88,7 +85,7 @@ We compared RAG-produced CVSS scores against traditional CVSS scoring across thr
 \textbf{coba 2} & \makecell[l]{9.8 (V3.1)} & \makecell[l]{8.7 (V3.1)} & Sedang & Tidak Konsisten \\
 \textbf{coba 3} & \makecell[l]{9.8 (V3.0)} & \makecell[l]{9.8 (V3.1)} & Tinggi & Tidak Konsisten \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \begin{table}[ht]
